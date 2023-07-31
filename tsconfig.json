@@ -20,5 +20,5 @@
   },
   "include": [
     "**/*.ts"
-  ]
+, "src/services/notifications"  ]
 }
