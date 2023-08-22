@@ -72,7 +72,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
         let journalContent = ""
         let futureDate: Date
         let futureDates: Date[] = []
-        // Add links to the previous and the next journal notes at the top of the journal note
+
         if (date) {
           let previousDate = new Date(date)
           previousDate.setDate(date.getDate() - 7)
@@ -98,7 +98,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
 
           futureDates.push(futureDate)
         }
-        journalContent += links
+        journalContent = `${journalContent} \n ${links}`
 
         let folderPath = basicPath
         let filePath = basicPath + `/${formatDate(journalSettings.namingFormat)}.md`
