@@ -190,10 +190,10 @@ function createTimelyNoteSetting(name: string, settingHandler: PeriodicSettingsH
     getText: (val: string, isDefault?: boolean) => {
       if (val === "value") {
         // @ts-ignore
-        return formatDate(isDefault ? settingHandler.periodicSettings[name.toLowerCase()].namingFormat : this.journalSettings.namingFormat)
+        return formatDate(isDefault ? settingHandler.periodicSettings[name.toLowerCase()].namingFormat : settingHandler.periodicSettings[name.toLowerCase()].namingFormat)
       } else {
         // @ts-ignore
-        return isDefault ? settingHandler.periodicSettings[name.toLowerCase()].namingFormat : this.journalSettings.namingFormat
+        return isDefault ? settingHandler.periodicSettings[name.toLowerCase()].namingFormat : settingHandler.periodicSettings.namingFormat
       }
     },
     setText: (val: string) => {
