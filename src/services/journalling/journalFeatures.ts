@@ -32,7 +32,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
     this.commands = []
   }
 
-  async createJournalNote(date?: Date) {
+  async createJournalNote(date?: Date, fromCommand: boolean = false) {
     // Get the path to the folder
     let journalSettings = this.settingsHandler.journalSettings
     let vault = this.plugin.app.vault
@@ -73,32 +73,29 @@ export class JournalFeatureHandler implements IFeatureHandler {
         let futureDate: Date
         let futureDates: Date[] = []
 
-        if (date) {
-          let previousDate = new Date(date)
-          previousDate.setDate(date.getDate() - 7)
-          let nextDate = new Date(date)
-          nextDate.setDate(date.getDate() + 7)
+        if (!date) return
+        let previousDate = new Date(date)
+        previousDate.setDate(date.getDate() - 7)
+        let nextDate = new Date(date)
+        nextDate.setDate(date.getDate() + 7)
 
-          let previousJournalName = formatDate(journalSettings.namingFormat, previousDate)
-          let nextJournalName = formatDate(journalSettings.namingFormat, nextDate)
+        let previousJournalName = formatDate(journalSettings.namingFormat, previousDate)
+        let nextJournalName = formatDate(journalSettings.namingFormat, nextDate)
 
-          journalContent += `#### [[${previousJournalName}|<--Last Week's Journal]] ++ [[${nextJournalName}|Next Week's Journal-->]]\n`
-          journalContent = journalContent + templateString + "\n"
-        }
+        let links = `#### [[${previousJournalName}|<--Last Week's Journal]] ++ [[${nextJournalName}|Next Week's Journal-->]]\n`
+        journalContent += links 
+        journalContent = journalContent + templateString + "\n"
 
-        let links
         for (let i = 0; i < 7; i++) {
           let startOfWeek = moment(date).startOf('week')
           let futureMomentDate = startOfWeek.add(i, 'days')
           futureDate = futureMomentDate.toDate()
           let formattedFutureDate = formatDate(dailyNamingFormat, futureMomentDate.toDate())
 
-          links = `## [[${formattedFutureDate}]]\n  > Your entry\n\n`
-          journalContent += links
-
+          journalContent += `## [[${formattedFutureDate}]]\n  > Your entry\n\n`
           futureDates.push(futureDate)
         }
-        journalContent = `${journalContent} \n ${links}`
+        journalContent += links
 
         let folderPath = basicPath
         let filePath = basicPath + `/${formatDate(journalSettings.namingFormat)}.md`
@@ -109,7 +106,9 @@ export class JournalFeatureHandler implements IFeatureHandler {
             if (file === "SuccessfulNewCreation" || file === "SuccessfulReplacement") {
               this.infoHandler.incrementCount()
               if (journalSettings.reminderOn) {
-                futureDate = setReminderTime(journalSettings.reminderTime, futureDate)
+                if (fromCommand) {
+                  futureDate = setReminderTime(journalSettings.reminderTime, futureDate)
+                }
                 let id = nanoid()
                 let reminder: PluginReminder = {
                   id: `Journal-Note_${id}`,
@@ -190,7 +189,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
       id: "create-journal-note",
       name: "Create Journal Note",
       callback: () => {
-        this.createJournalNote()
+        this.createJournalNote(undefined, true)
       }
     })
   }

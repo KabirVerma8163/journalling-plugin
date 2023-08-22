@@ -59,6 +59,7 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
         return vault.modify(file , templateContents).then((file) => {
           if (file != null) {
             return new Promise((resolve, reject) => {
+              this.plugin.app.workspace.getMostRecentLeaf()?.openFile(file)
               resolve(NewFileCreationStatus.SuccessfulReplacement)
             })
           }
@@ -70,6 +71,8 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
       vault.create(folderPath + filename, templateContents)
         .then((file) => {
           if (file != null && file instanceof TFile) {
+            // Open the note
+            this.plugin.app.workspace.getMostRecentLeaf()?.openFile(file)
             resolve(NewFileCreationStatus.SuccessfulNewCreation)
           }
         })
