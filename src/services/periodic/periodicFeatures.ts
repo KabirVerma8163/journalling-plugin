@@ -12,6 +12,7 @@ import { nanoid } from 'nanoid'
 import { firstSunday, formatDate, setReminderTime } from "src/utils/independentUtils"
 import { Server } from "http"
 import { JournalService } from "../journalling/journal"
+import { link } from "fs"
 
 export class PeriodicFeaturesHandler implements IFeatureHandler {
   name: string
@@ -92,18 +93,20 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     tomorrowDate.setDate(tomorrowDate.getDate() + 1)
     let tomorrowFileName = formatDate(dailySettings.namingFormat, tomorrowDate)
 
-    templateString +=  `#### [[${yesterFileName}|<--Yesterday's Note]] ++ [[${tomorrowFileName}|Tomorrow's Note-->]]\n\n`
+    let links = `#### [[${yesterFileName}|<--Yesterday's Note]] ++ [[${tomorrowFileName}|Tomorrow's Note-->]]\n`
+    templateString += links
 
     if (templateFile instanceof TFile) {
       await vault.read(templateFile).then(content => {
         templateString = content
-        // find the string '{{joural_link}}' in the templateString and replace with the link to the week's journal: "Weekly journal"
+
+        // Replaces the {{journal_link}} in the template
         if (templateString.includes('{{journal_link}}')) {
           this.serviceMngr.servicesMngr.serviceMngrs.forEach(service => {
             if (service.name === "Journal") {
               let journalNamingFormat = this.serviceMngr.servicesMngr.settingsMngr.getJournalSettings().namingFormat
               let journalName = formatDate(journalNamingFormat, firstSunday(noteDate))
-              let weeklyJournalPath = `[[${journalName}]]`
+              let weeklyJournalPath = `[[${journalName}|Today's Journal]]`
               // @ts-ignore
               templateString = templateString.replaceAll("{{journal_link}}", weeklyJournalPath)
             }
@@ -112,12 +115,12 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
       })
     }
 
-
+    templateString += links
     vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath, formatDate(dailySettings.namingFormat, date), templateString, true)
       .then(() => {
         this.infoHandler.incrementDailyCount()
         if (dailySettings.reminderOn) {
-          // noteDate = setReminderTime(dailySettings.reminderTime, noteDate)
+          noteDate = setReminderTime(dailySettings.reminderTime, noteDate)
           let id = nanoid()
           let reminder: PluginReminder = {
             id: `Daily-Note_${id}`,

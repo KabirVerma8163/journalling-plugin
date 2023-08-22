@@ -5,7 +5,7 @@ import { IServiceMngr } from "src/services/servicesMngr"
 import { JournalService } from "src/services/journalling/journal"
 import { JournalInfoHandler } from "src/services/journalling/journalInfo"
 import { JournalSettingsHandler } from "src/services/journalling/journalSettings"
-import { firstSunday, formatDate } from "src/utils/independentUtils"
+import { firstSunday, formatDate, setReminderTime } from "src/utils/independentUtils"
 import { DEFAULT_PERIODIC_SETTINGS } from "src/dataManagement/dataTypes"
 import moment from "moment"
 import { PeriodicService } from "../periodic/periodic"
@@ -82,21 +82,23 @@ export class JournalFeatureHandler implements IFeatureHandler {
           let previousJournalName = formatDate(journalSettings.namingFormat, previousDate)
           let nextJournalName = formatDate(journalSettings.namingFormat, nextDate)
 
-          journalContent += `#### [[${previousJournalName}|<--Last Week's Journal]] ++ [[${nextJournalName}|Next Week's Journal-->]]\n\n`
+          journalContent += `#### [[${previousJournalName}|<--Last Week's Journal]] ++ [[${nextJournalName}|Next Week's Journal-->]]\n`
           journalContent = journalContent + templateString + "\n"
         }
 
+        let links
         for (let i = 0; i < 7; i++) {
           let startOfWeek = moment(date).startOf('week')
           let futureMomentDate = startOfWeek.add(i, 'days')
           futureDate = futureMomentDate.toDate()
           let formattedFutureDate = formatDate(dailyNamingFormat, futureMomentDate.toDate())
 
-          journalContent += `## [[${formattedFutureDate}]] 
-          > Your entry\n\n`
+          links = `## [[${formattedFutureDate}]]\n  > Your entry\n\n`
+          journalContent += links
 
           futureDates.push(futureDate)
         }
+        journalContent += links
 
         let folderPath = basicPath
         let filePath = basicPath + `/${formatDate(journalSettings.namingFormat)}.md`
@@ -107,7 +109,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
             if (file === "SuccessfulNewCreation" || file === "SuccessfulReplacement") {
               this.infoHandler.incrementCount()
               if (journalSettings.reminderOn) {
-                // futureDate = setReminderTime(dailySettings.reminderTime, noteDate)
+                futureDate = setReminderTime(journalSettings.reminderTime, futureDate)
                 let id = nanoid()
                 let reminder: PluginReminder = {
                   id: `Journal-Note_${id}`,

@@ -12,9 +12,12 @@ export default class JournallingPlugin extends Plugin {
 	servicesManager: ServicesManager
 
 	debugger: DebuggingSupport
-	// TODO, check if the template naming format is a valid naming format.
-	// TODO, make sure settings are compatible with the new settings system, for example notifications/schedulers can't be off if autocreate is on 
-	// TODO, the data handling stuff is still finicky, make sure it works with the addition of advanced settings and such.
+	// TODO: check if the template naming format is a valid naming format.
+	// TODO: make sure settings are compatible with the new settings system, for example notifications/schedulers can't be off if autocreate is on 
+	// TODO: the data handling stuff is still finicky, make sure it works with the addition of advanced settings and such.
+	// TODO: You forgot to enable the reminder time properly
+	// TODO: The daily note name is still not showing up
+	
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest)
 		this.name = manifest.name

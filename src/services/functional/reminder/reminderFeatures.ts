@@ -82,7 +82,7 @@ export class ReminderFeatureHandler implements IFeatureHandler {
   async addReminder(reminder: PluginReminder) {
     // TODO: This will have to be changed when we finally add snoozing to this
     if (isValidFutureDateOrCron(reminder.dateActiveOn)) {
-      console.log(`Adding reminder for the date ${reminder.dateActiveOn}`)
+      this.plugin.debugger.log(`Adding reminder for the date ${reminder.dateActiveOn}`)
       this.infoHandler.addReminder(this.createReminder(reminder, ""))
     }
   }

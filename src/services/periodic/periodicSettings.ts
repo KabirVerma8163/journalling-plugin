@@ -189,11 +189,11 @@ function createTimelyNoteSetting(name: string, settingHandler: PeriodicSettingsH
     descText: "Current Format: ",
     getText: () => {
       // @ts-ignore
-      return settingHandler.periodicSettings[name.toLowerCase()].naming
+      return settingHandler.periodicSettings[name.toLowerCase()].namingFormat
     },
     setText: (val: string) => {
       // @ts-ignore
-      settingHandler.periodicSettings[name.toLowerCase()].naming = val
+      settingHandler.periodicSettings[name.toLowerCase()].namingFormat = val
       settingHandler.setPeriodicSettings()
     }
   }
