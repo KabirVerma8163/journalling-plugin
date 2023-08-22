@@ -1,8 +1,76 @@
-/*
+.collapsible-container {
+  flex-direction: column;
+  opacity: 1;
+  transition: opacity 0.15s ease;
+  border-bottom: 1px solid var(--background-secondary-alt);
+}
+.display{
+  display: flex;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.disappear-with-transition {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.disappear-with-transition.display-none {
+  display: none;
+}
 
-If your plugin does not need CSS, delete this file.
+.display-none {
+  display: none;
+}
 
-*/
+.collapsible-container-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.45em;
+}      
+.arrow-left {
+  width: 0;
+  height: 0;
+  border-top: 0.5em solid transparent;
+  border-bottom: 0.5em solid transparent;
+  border-right: 0.5em solid var(--icon-color);
+  transition: transform 0.1s ease;
+}
+.arrow-down {
+  transform: rotate(-90deg);
+  transition: transform 0.1s ease;
+}
+
+#daily-settings-header {
+  margin-top: 0 !important;
+}
+
+.late-reminder {
+  color: var(--color-red);
+  /* color: #ff0000;
+  border: 1px solid #ff0000; 
+  padding: 10px;
+  margin-bottom: 10px; */
+}
+
+.active-reminder {
+  color: var(--color-green);
+  /* color: #008000;
+  border: 1px solid #008000;
+  padding: 10px;
+  margin-bottom: 10px; */
+}
+
+.snoozed-reminder {
+  color: var(--color-blue);
+  /* color: #0000ff; 
+  border: 1px solid #0000ff;
+  padding: 10px;
+  margin-bottom: 10px; */
+}
+
+.done-reminder {
+  color: var(--color-base-40);
+  /* color: #808080;
+  border: 1px solid #808080;
+  padding: 10px;
+  margin-bottom: 10px; */
+}
