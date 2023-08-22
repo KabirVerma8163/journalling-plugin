@@ -188,6 +188,12 @@ export class JournalFeatureHandler implements IFeatureHandler {
     this.plugin.addCommand({
       id: "create-journal-note",
       name: "Create Journal Note",
+      hotkeys: [
+        {
+          modifiers: ["Ctrl"],
+          key: "j",
+        },
+      ],
       callback: () => {
         this.createJournalNote(undefined, true)
       }

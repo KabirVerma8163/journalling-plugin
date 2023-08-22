@@ -41,6 +41,12 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     this.commands.push(this.plugin.addCommand({
       id: "create-daily-note",
       name: "Create Daily Note",
+      hotkeys: [
+        {
+          modifiers: ["Ctrl"],
+          key: "t",
+        },
+      ],
       callback: () => {
         this.createDailyNote(undefined, true)
       }

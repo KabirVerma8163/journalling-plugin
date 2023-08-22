@@ -52,14 +52,17 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
       if (replace == false) {
         this.plugin.basicErrorNotice(`File: ${filename} already exists in ${folderPath}`)
         return new Promise((resolve, reject) => {
+          // @ts-ignore
+          this.openFile(file.path)
           resolve(NewFileCreationStatus.FileAlreadyExists)
         })
       } else {
         this.plugin.basicWarningNotice(`Replacing File: ${filename} already exists in ${folderPath}`)
-        return vault.modify(file , templateContents).then((file) => {
-          if (file != null) {
+        return vault.modify(file , templateContents).then(() => {
+          if (file != null && file instanceof TFile) {
             return new Promise((resolve, reject) => {
-              this.plugin.app.workspace.getMostRecentLeaf()?.openFile(file)
+              // @ts-ignore
+              this.openFile(file.path)
               resolve(NewFileCreationStatus.SuccessfulReplacement)
             })
           }
@@ -72,7 +75,7 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
         .then((file) => {
           if (file != null && file instanceof TFile) {
             // Open the note
-            this.plugin.app.workspace.getMostRecentLeaf()?.openFile(file)
+            this.openFile(file.path)
             resolve(NewFileCreationStatus.SuccessfulNewCreation)
           }
         })
@@ -81,8 +84,8 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
 
   async openFile(filePath: string){
     let file = this.plugin.app.vault.getAbstractFileByPath(filePath)
-    if (file != null){
-      this.plugin.app.workspace.getMostRecentLeaf()?.openFile(file as TFile)
+    if (file != null && file instanceof TFile){
+      this.plugin.app.workspace.getLeaf(true).openFile(file)
     }
   }
 
