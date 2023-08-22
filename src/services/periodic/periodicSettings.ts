@@ -187,9 +187,14 @@ function createTimelyNoteSetting(name: string, settingHandler: PeriodicSettingsH
     setting: new Setting(collasibleObj.collapsibleEl).setName(`${name} Note Naming Format`),
     settingName: `periodic-${name}-naming-format`,
     descText: "Current Format: ",
-    getText: () => {
-      // @ts-ignore
-      return settingHandler.periodicSettings[name.toLowerCase()].namingFormat
+    getText: (val: string, isDefault?: boolean) => {
+      if (val === "value") {
+        // @ts-ignore
+        return formatDate(isDefault ? settingHandler.periodicSettings[name.toLowerCase()].namingFormat : this.journalSettings.namingFormat)
+      } else {
+        // @ts-ignore
+        return isDefault ? settingHandler.periodicSettings[name.toLowerCase()].namingFormat : this.journalSettings.namingFormat
+      }
     },
     setText: (val: string) => {
       // @ts-ignore
