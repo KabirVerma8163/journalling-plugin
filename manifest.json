@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "journalling-and-more",
+	"name": "Journalling",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Plugin for journalling and daily notes, both integrated with each other. Reminders and notifications for both",
+	"author": "JammedPancakes",
+	"authorUrl": "https://github.com/KabirVerma8163",
+	"fundingUrl": "https://github.com/KabirVerma8163/journalling-plugin",
 	"isDesktopOnly": false
 }

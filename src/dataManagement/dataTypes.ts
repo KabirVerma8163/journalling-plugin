@@ -1,26 +1,24 @@
-import { PluginNotification } from "src/services/notifications/notificationInfo"
-import { PluignReminder } from "src/services/reminders/reminderInfo"
+import { PluginScheduledNotification } from "src/services/functional/notification/notificationInfo"
+import { PluginReminder } from "src/services/functional/reminder/reminderInfo"
 
-export type TNotificationsInfo = {
-  count: number,
-  canNotify: boolean,
-  notifications: PluginNotification[] 
+export type TNotificationInfo = {
+  count: number
+  notifications: PluginScheduledNotification[] 
 }
-export const DEFAULT_NOTIFICATIONS_INFO: TNotificationsInfo = {
+export const DEFAULT_NOTIFICATIONS_INFO: TNotificationInfo = {
   count: 0,
-  canNotify: true,
   notifications: []
 }
 
-export type TRemindersInfo = {
-  lateShowing: boolean,
-  activeShowing: boolean,
-  snoozedShowing: boolean,
-  doneShowing: boolean,
-  count: number,
-  reminders: PluignReminder[]
+export type TReminderInfo = {
+  lateShowing: boolean
+  activeShowing: boolean
+  snoozedShowing: boolean
+  doneShowing: boolean
+  count: number
+  reminders: PluginReminder[]
 }
-export const DEFAULT_REMINDERS_INFO: TRemindersInfo = {
+export const DEFAULT_REMINDERS_INFO: TReminderInfo = {
   lateShowing: true,
   activeShowing: true,
   snoozedShowing: true,
@@ -29,61 +27,113 @@ export const DEFAULT_REMINDERS_INFO: TRemindersInfo = {
   reminders: []
 }
 
-export type TPeriodicInfo = {}
-export const DEFAULT_PERIODIC_INFO: TPeriodicInfo = {}
+export type TVaultManipulationInfo = {}
+export const DEFAULT_VAULT_MANIPULATION_INFO: TVaultManipulationInfo = {}
 
-export type TJournalInfo = {}
-export const DEFAULT_JOURNAL_INFO: TJournalInfo = {}
+export type TPeriodicInfo = {
+  daily: {
+    count: number
+  }
+}
+export const DEFAULT_PERIODIC_INFO: TPeriodicInfo = {
+  daily: {
+    count: 0
+  }
+}
+
+export type TJournalInfo = {
+  count: number
+}
+export const DEFAULT_JOURNAL_INFO: TJournalInfo = {
+  count: 0,
+}
 
 export type TInfo = {
-  notifications: TNotificationsInfo,
-  reminders: TRemindersInfo,
-  periodic: TPeriodicInfo,
+  notification: TNotificationInfo
+  reminder: TReminderInfo
+  periodic: TPeriodicInfo
   journal: TJournalInfo
+  vaultManipulation: TVaultManipulationInfo
   // Add other fields as needed
 }
 export const DEFAULT_INFO: TInfo = {
-  notifications: DEFAULT_NOTIFICATIONS_INFO,
-  reminders: DEFAULT_REMINDERS_INFO,
+  notification: DEFAULT_NOTIFICATIONS_INFO,
+  reminder: DEFAULT_REMINDERS_INFO,
   periodic: DEFAULT_PERIODIC_INFO,
-  journal: DEFAULT_JOURNAL_INFO
+  journal: DEFAULT_JOURNAL_INFO,
+  vaultManipulation: DEFAULT_VAULT_MANIPULATION_INFO,
 }
 
-export type TNotificationSettings = {}
-export const DEFAULT_NOTIFICATION_SETTINGS: TNotificationSettings = {}
+export type TNotificationSettings = {
+  canNotify: boolean
+  showing: boolean
+}
+export const DEFAULT_NOTIFICATION_SETTINGS: TNotificationSettings = {
+  canNotify: true,
+  showing: true,
+}
 
-export type TReminderSettings = {}
-export const DEFAULT_REMINDER_SETTINGS: TReminderSettings = {}
+export type TReminderSettings = {
+  showing: boolean
+}
+export const DEFAULT_REMINDER_SETTINGS: TReminderSettings = {
+  showing: true,
+}
+
+export type TVaultManipulationSettings = {
+  replaceFilesOn: boolean
+  showing: boolean
+}
+export const DEFAULT_VAULT_MANIPULATION_SETTINGS: TVaultManipulationSettings = {
+  replaceFilesOn: false,
+  showing: true,
+}
 
 export type TPeriodicSettings = {
   daily : {
-    on: boolean,
-    naming: string,
-    dirPath: string,
-    templatePath: string,
-    reminderOn: boolean,
-    reminderTime: string,
-    subDirDiv: string,
-    yearlySubDirName: string,
-    monthlySubDirName: string,
-    weeklySubDirName: string,
-    showing: boolean,
-    noteCount: number,
+    autoCreateOn: boolean
+    namingFormat: string
+    dirPath: string
+    templatePath: string
+    reminderOn: boolean
+    reminderTime: string
+    weekly: {
+      subDirOn: boolean
+      subDirFormat: string
+    }
+    monthly: {
+      subDirOn: boolean
+      subDirFormat: string
+    }
+    yearly: {
+      subDirOn: boolean
+      subDirFormat: string
+    } 
+    showing: boolean
+    noteCount: number
   }
-  showing: boolean,
+  showing: boolean
 }
 export const DEFAULT_PERIODIC_SETTINGS: TPeriodicSettings = {
   daily : {
-    on: true,
-    naming: "Do ddd MMM YY",
+    autoCreateOn: true,
+    namingFormat: "Do ddd MMM YY",
     dirPath: "/",
     templatePath: "/",
     reminderOn: true,
     reminderTime: "2100", 
-    subDirDiv: "weekly",
-    yearlySubDirName: "\\Y\\e\\a\\r - YY",
-    monthlySubDirName: "\\M\\o\\n\\t\\h - MMM \\o\\f YY",
-    weeklySubDirName: "\\W\\e\\e\\k - WW \\o\\f YY",
+    weekly: {
+      subDirOn: true,
+      subDirFormat: "\\W\\e\\e\\k - WW \\o\\f YY",
+    },
+    monthly: {
+      subDirOn: true,
+      subDirFormat: "\\M\\o\\n\\t\\h - M MMM \\o\\f YY",
+    },
+    yearly: {
+      subDirOn: true,
+      subDirFormat: "\\Y\\e\\a\\r - YY",
+    },
     showing: true,
     noteCount: 0,
   },
@@ -91,60 +141,66 @@ export const DEFAULT_PERIODIC_SETTINGS: TPeriodicSettings = {
 }
 
 export type TJournalSettings = {
-  dirPath: string, 
-  naming: string,
-  templatePath: string
-  reminderOn: boolean,
-  reminderTime: string,
+  autoCreateOn: boolean
+  namingFormat: string
+  dirPath: string
+  journalTemplatePath: string
+  entryTemplatePath: string
+  reminderOn: boolean
+  reminderTime: string
   // later on add an option to choose the differentater of how many day's journal in one note
   monthly : {
-    subDirOn: boolean,
-    subDirName: string,
-  },
+    subDirOn: boolean
+    subDirFormat: string
+  }
   yearly : {
-    subDirOn: boolean,
-    subDirName: string,
-  },
-  showing: boolean,
+    subDirOn: boolean
+    subDirFormat: string
+  }
+  showing: boolean
 }
 export const DEFAULT_JOURNAL_SETTINGS: TJournalSettings = {
+  autoCreateOn: true,
   dirPath: "/",
-  naming: "\\W\\e\\e\\k\\l\\y Journ\\a\\l – Do MMM YY",
-  templatePath: "/",
+  namingFormat: "\\W\\e\\e\\k\\l\\y Journ\\a\\l – Do MMM YY",
+  journalTemplatePath: "/",
+  entryTemplatePath: "/",
   reminderOn: true,
   reminderTime: "2300",
   monthly: {
     subDirOn: true,
-    subDirName: "M MMM YY"
+    subDirFormat: "M MMM YY"
   },
   yearly: {
     subDirOn: true,
-    subDirName: "YYYY"
+    subDirFormat: "YYYY"
   },
   showing: true
 }
 
-
 export type TSettings = {
-  notifications : TNotificationSettings,
-  remnders : TReminderSettings,
-  periodic : TPeriodicSettings,
-  journal : TJournalSettings,
-}
+  notification : TNotificationSettings
+  reminder : TReminderSettings
+  vaultManipulation : TVaultManipulationSettings
+  periodic : TPeriodicSettings
+  journal : TJournalSettings
+} 
 
 export const DEFAULT_SETTINGS: TSettings = {
-  notifications : DEFAULT_NOTIFICATION_SETTINGS,
-  remnders : DEFAULT_REMINDER_SETTINGS,
+  notification : DEFAULT_NOTIFICATION_SETTINGS,
+  reminder : DEFAULT_REMINDER_SETTINGS,
+  vaultManipulation : DEFAULT_VAULT_MANIPULATION_SETTINGS,
   periodic : DEFAULT_PERIODIC_SETTINGS,
   journal : DEFAULT_JOURNAL_SETTINGS,
-  // reminders:
 }
 
 export type TData = {
-  info: TInfo,
+  lastVersion: string
+  info: TInfo
   settings: TSettings
 }
 export const DEFAULT_DATA: TData = {
+  lastVersion: "1.0.0",
   info: DEFAULT_INFO,
   settings: DEFAULT_SETTINGS
 }

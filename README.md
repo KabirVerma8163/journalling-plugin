@@ -1,95 +1,29 @@
-# Obsidian Sample Plugin
+# Journalling Plugin
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+## What is this thing?
+This plugin is still in its beta stage, all its features are being developed and need working on. 
+To download and use this plugin the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) must be added to your vault.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+The design is supposed to be modular, new setting objects, handlers can all be used independently and different services can be turned on and off with the commenting out of a single line which makes testing and debugging a lot easier. If you find any of the code here useful for your own plugin, feel free to use it and post questions here if you have any. I would also like to thank Liam Cain's periodic notes for his code on making suggesters, which I modified slightly to fit my own use case. 
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+## Services Briefing
+Currently the 4 services this plugin offers are: 
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+1. Journalling
+> This is currently the core of this plugin and will always be the main theme. I wanted to make a plugin that automated journal creation process and sent regular reminders for when certain notes had to be created/filled in. Currrently it offers customizability on the kind of journal you want, in the future more related features may be added as well as expansions to the current journalling feature suite. 
+> Creating a journal, also creates the respective daily notes, for now and the plugin only support weekly journals, support for other kinds of journals will be added soon.
 
-## First time developing plugins?
+2. Notifications
+> These were designed so as to not disrupt any functioning on your mobile devices, so the commands that would work on mobile and computer devices are still valid, but those functions will not disrupt your proceedings on mobile.
 
-Quick starting guide for new plugin devs:
+3. Reminders
+> Currently there is no way to make new reminders, but that will be changed in the future, maybe even connecting to your ICloud account, right now they only work with your journal and periodic note reminders.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+4. Periodic Notes
+> I found Liam Cain's plugin a little lacking in features so I wanted to add features of my own. Right now my plugin only works with my periodic notes, but in the future I may try and add support for his plugin as well. 
 
-## Releasing new releases
+## Disclaimers
+Right now as I just wanted to get the plugin out and running, there are some features for which settings exist, but they are currently not active. 
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
-
-If you have multiple URLs, you can also do:
-
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
-
-## API Documentation
-
-See https://github.com/obsidianmd/obsidian-api
+1. Autocreation:
+There is no off mode for the autocreation, it will always be on.

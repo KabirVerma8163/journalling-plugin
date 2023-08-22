@@ -12,13 +12,16 @@ node_modules
 # They should be uploaded to GitHub releases instead.
 main.js
 
-planning.md
-
 # Exclude sourcemaps
 *.map
 
 # obsidian
 data.json
+info.json 
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
+
+/src/utils/play.ts
+planning.md
+
