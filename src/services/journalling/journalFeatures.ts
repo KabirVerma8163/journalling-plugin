@@ -81,20 +81,35 @@ export class JournalFeatureHandler implements IFeatureHandler {
 
         let previousJournalName = formatDate(journalSettings.namingFormat, previousDate)
         let nextJournalName = formatDate(journalSettings.namingFormat, nextDate)
+        
+        // Get the template file frontmatter
+        const regex = /^---\n([\s\S]*?)\n---\n/;
+        let frontmatter = templateString.match(regex)
+        if (frontmatter != null) {
+          journalContent = frontmatter[0]
+          templateString = templateString.replace(regex, "")
+        }
 
+        // Beginning links
         let links = `#### [[${previousJournalName}|<--Last Week's Journal]] ++ [[${nextJournalName}|Next Week's Journal-->]]\n`
         journalContent += links 
         journalContent = journalContent + templateString + "\n"
 
+        // Daily note links
+        let dailyNoteLinks = ""
         for (let i = 0; i < 7; i++) {
           let startOfWeek = moment(date).startOf('week')
           let futureMomentDate = startOfWeek.add(i, 'days')
           futureDate = futureMomentDate.toDate()
           let formattedFutureDate = formatDate(dailyNamingFormat, futureMomentDate.toDate())
 
-          journalContent += `## [[${formattedFutureDate}]]\n  > Your entry\n\n`
+          dailyNoteLinks += `## [[${formattedFutureDate}]]\n  > Your entry\n\n`
           futureDates.push(futureDate)
         }
+        journalContent = journalContent.replace("{links}", dailyNoteLinks)
+
+        // Adding the ending links
+        journalContent = journalContent.replace("\n$", "links")
         journalContent += links
 
         let folderPath = basicPath
