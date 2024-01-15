@@ -12,6 +12,7 @@ Currently the 4 services this plugin offers are:
 1. Journalling
 > This is currently the core of this plugin and will always be the main theme. I wanted to make a plugin that automated journal creation process and sent regular reminders for when certain notes had to be created/filled in. Currrently it offers customizability on the kind of journal you want, in the future more related features may be added as well as expansions to the current journalling feature suite. 
 > Creating a journal, also creates the respective daily notes, for now and the plugin only support weekly journals, support for other kinds of journals will be added soon.
+> Now you can customize the position of the daily note links with <{links}> in your template note
 
 2. Notifications
 > These were designed so as to not disrupt any functioning on your mobile devices, so the commands that would work on mobile and computer devices are still valid, but those functions will not disrupt your proceedings on mobile.
