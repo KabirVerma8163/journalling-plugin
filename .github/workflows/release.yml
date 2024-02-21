@@ -7,8 +7,6 @@ on:
 
 jobs:
   build:
-    runs:
-      using: 'node20'
     runs-on: ubuntu-latest
 
     steps:
