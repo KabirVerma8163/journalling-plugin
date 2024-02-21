@@ -70,16 +70,13 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     // if the dailySettings.diryPath is "/" then don't add the extra "/"
     let basicPath = "/" === dailySettings.dirPath ? "" : "" + dailySettings.dirPath
     if (basicPath === "") basicPath = "/"
-    if (dailySettings.yearly.subDirOn) {
-      // Add the yearly subdirectory here
+    if (dailySettings.yearly.subDirOn) { // Add the yearly subdirectory here
       basicPath += "/" + formatDate(dailySettings.yearly.subDirFormat, date)
-    }
-    if (dailySettings.monthly.subDirOn) {
-      // Add the monthly subdirectory here
+    } 
+    if (dailySettings.monthly.subDirOn) { // Add the monthly subdirectory here
       basicPath += "/" + formatDate(dailySettings.monthly.subDirFormat, date)
     }
-    if (dailySettings.weekly.subDirOn) {
-      // Add the weekly subdirectory here
+    if (dailySettings.weekly.subDirOn) { // Add the weekly subdirectory here
       basicPath += "/" + formatDate(dailySettings.weekly.subDirFormat, date)
     }
 
@@ -100,10 +97,16 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     let tomorrowFileName = formatDate(dailySettings.namingFormat, tomorrowDate)
 
     let links = `#### [[${yesterFileName}|<--Yesterday's Note]] ++ [[${tomorrowFileName}|Tomorrow's Note-->]]\n`
-    dailyNoteContent += links
 
     if (templateFile instanceof TFile) {
       await vault.read(templateFile).then(content => {
+        const regex = /^---\n([\s\S]*?)\n---\n/;
+        let frontmatter = content.match(regex)
+        if (frontmatter != null) {
+          dailyNoteContent = frontmatter[0]
+          content = content.replace(regex, "")
+        }
+        dailyNoteContent += links
         dailyNoteContent += content
 
         // Replaces the {{journal_link}} in the template
