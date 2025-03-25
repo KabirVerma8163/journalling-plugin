@@ -21,7 +21,7 @@ export default class JournallingPlugin extends Plugin {
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest)
 		this.name = manifest.name
-		this.isTesting = false
+		this.isTesting = true
 		this.debugger = new DebuggingSupport(this)
 		if (this.isTesting) {
 			console.clear()
@@ -43,10 +43,6 @@ export default class JournallingPlugin extends Plugin {
 	}
 
 	onunload() {}
-
-	testing(){
-		console.log('Testing')
-	}
 
 	// A basic function to send an error notice
 	basicErrorNotice(errMsg: string, length?: number) {

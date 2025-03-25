@@ -1,4 +1,4 @@
-import { Command, TFile } from "obsidian"
+import { Command, FileView, TFile, Workspace, WorkspaceLeaf } from "obsidian"
 import JournallingPlugin from "src/main"
 import { IFeatureHandler } from "src/services/features"
 import { IServiceMngr } from "src/services/servicesMngr"
@@ -26,73 +26,128 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
     this.commands = []
   }
 
-  async createNewFile(folderPath: string, filename: string, templateContents: string = "", replace: boolean = this.settingsHandler.vaultManipulationSettings.replaceFilesOn) {
+  async createNewFile(
+    folderPath: string,
+    filename: string,
+    templateContents: string = "",
+    replace: boolean = this.settingsHandler.vaultManipulationSettings.replaceFilesOn
+  ) {
     let vault = this.plugin.app.vault
 
+    // Create the folder from the folder path if it doesn't exist 
     await vault.adapter.exists(folderPath).then((exists) => {
       if (!exists) {
         vault.createFolder(folderPath)
           .then((folder) => { })
           .catch((err) => {
+            this.plugin.basicErrorNotice(`Error in file creation:${filename} check consolve for details.`)
             console.log(`Error in folder existence: ${err}`)
             return
           })
       }
     })
 
+    // #region Path sanity checks
     if (folderPath.endsWith("/") == false) {
       folderPath = folderPath + "/"
     }
     if (filename.substring(0, 1) == "/") {
       filename = filename.substring(1)
     }
+    // #endregion
 
+    // Steps for if the file already exists 
     let file = vault.getAbstractFileByPath(`${folderPath}${filename}`)
     if (file != null && file instanceof TFile) {
-      if (replace == false) {
-        this.plugin.basicErrorNotice(`File: ${filename} already exists in ${folderPath}`)
-        return new Promise((resolve, reject) => {
-          // @ts-ignore
-          this.openFile(file.path)
-          resolve(NewFileCreationStatus.FileAlreadyExists)
-        })
-      } else {
-        this.plugin.basicWarningNotice(`Replacing File: ${filename} already exists in ${folderPath}`)
-        return vault.modify(file , templateContents).then(() => {
+      if (!replace) {
+        return new Promise ((resolve, reject) => { // File exists and leave it as is
           if (file != null && file instanceof TFile) {
-            return new Promise((resolve, reject) => {
-              // @ts-ignore
-              this.openFile(file.path)
-              resolve(NewFileCreationStatus.SuccessfulReplacement)
+            resolve({
+              file: file, 
+              status: NewFileCreationStatus.FileAlreadyExists
             })
           }
+          reject({
+            error: `File: ${filename} already exists in ${folderPath}`,
+            status: NewFileCreationStatus.FailedToCreateFile
+          })
+        })
+      } else { // File Replacement 
+        this.plugin.basicWarningNotice(`Replacing File: ${filename} already exists in ${folderPath}`)
+        return vault.modify(file, templateContents)
+        .then(() => {
+          return new Promise((resolve, reject) => {
+            if (file != null && file instanceof TFile) {
+              resolve(NewFileCreationStatus.SuccessfulReplacement)
+            } else {
+              reject({
+                file: file,
+                error: "File exists but there was a type error in modification.",
+                status: NewFileCreationStatus.UnsuccessfulReplacement
+              })
+            }
+          })
+        })
+        .catch(() => {
+          return new Promise((resolve, reject) => {
+            reject({
+              file: file,
+              error: "File Exists but couldn't be modified.",
+              status: NewFileCreationStatus.UnsuccessfulReplacement
+            })
+          })
         })
       }
     }
 
+    // Create the file if it doesn't exist
     return new Promise ((resolve, reject) => {
       vault.create(folderPath + filename, templateContents)
-        .then((file) => {
+        .then((file) => { // Successful creation
           if (file != null && file instanceof TFile) {
-            // Open the note
-            this.openFile(file.path)
-            resolve(NewFileCreationStatus.SuccessfulNewCreation)
+            resolve({
+              file: file, 
+              status: NewFileCreationStatus.SuccessfulNewCreation
+            })
           }
+        })
+        .catch((error) => { // UnSuccessful creation
+          reject({
+            error: error,
+            status: NewFileCreationStatus.FailedToCreateFile
+          })
         })
     })
   }
 
+  // There is no point in adding more customizability to how to open the file 
+  // as obsidian natively doesn't have that many options 
   async openFile(filePath: string){
-    let file = this.plugin.app.vault.getAbstractFileByPath(filePath)
-    if (file != null && file instanceof TFile){
-      this.plugin.app.workspace.getLeaf(true).openFile(file)
+    let vault = this.plugin.app.vault
+    let workspace = this.plugin.app.workspace
+    let file = vault.getAbstractFileByPath(filePath)
+
+    // Check if the file is already open. 
+    let openFileLeaf = null
+    workspace.iterateAllLeaves((leaf) => {
+      let view: FileView = leaf.view as FileView
+      if (view.file && view.file.path == filePath){ openFileLeaf = leaf }
+    })
+
+    if (openFileLeaf){
+      workspace.setActiveLeaf(openFileLeaf)
+    } else if (file != null && file instanceof TFile){
+      workspace.getLeaf(true).openFile(file)
     }
   }
 
-  async createNewMarkdownFile(folderPath: string, filename: string, templateContents: string = "", replace: boolean = false) {
-    if (filename.endsWith(".md") == false) {
-      filename = filename + ".md"
-    }
+  async createNewMarkdownFile(
+    folderPath: string, 
+    filename: string,
+    templateContents: string = "",
+    replace: boolean = this.settingsHandler.vaultManipulationSettings.replaceFilesOn
+  ) {
+    if (!filename.endsWith(".md")) { filename = filename + ".md" }
     return this.createNewFile(folderPath, filename, templateContents, replace)
   }
 
@@ -109,6 +164,7 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
 export enum NewFileCreationStatus {
   SuccessfulNewCreation = "SuccessfulNewCreation",
   SuccessfulReplacement = "SuccessfulReplacement",
+  UnsuccessfulReplacement = "UnsuccessfulReplacement",
   FileAlreadyExists = "FileAlreadyExists",
   FailedToCreateFile = "FailedToCreateFile",
 }

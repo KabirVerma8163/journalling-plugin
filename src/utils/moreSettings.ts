@@ -55,7 +55,6 @@ export class InteractiveTextSetting implements IExtendedSetting {
   }
 
   private handleTextChange(value: string, getText: (val: string, isDefault?: boolean) => string, setText: (val: string) => void, id: string) {
-    // console.log("value:", value)
     setText(value)
     // @ts-ignore
     document.getElementById(`${id}-interactiveText`).textContent = getText("value")

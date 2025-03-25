@@ -13,8 +13,10 @@ import { PeriodicFeaturesHandler } from "../periodic/periodicFeatures"
 import { nanoid } from "nanoid"
 import { PluginReminder, ReminderType } from "../functional/reminder/reminderInfo"
 import { NotificationLocation } from "../functional/notification/notificationInfo"
+import { DatePickerModal, LuxonDatePickerModal, PopupDatePicker } from "src/ui_elements/dateInputModal"
 
 export class JournalFeatureHandler implements IFeatureHandler {
+  // #region Variable Declartion
   name: string
   description: string
   plugin: JournallingPlugin
@@ -22,6 +24,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
   infoHandler: JournalInfoHandler
   settingsHandler: JournalSettingsHandler
   commands: Command[]
+  // #endregion
 
   constructor(serviceMngr: IServiceMngr) {
     this.name = serviceMngr.name
@@ -116,7 +119,9 @@ export class JournalFeatureHandler implements IFeatureHandler {
         let filePath = basicPath + `/${formatDate(journalSettings.namingFormat)}.md`
         let fileName = `/${formatDate(journalSettings.namingFormat, date)}.md`
 
-        vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath, fileName, journalContent)
+        vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath, fileName
+          , true // Needs changing
+          , journalContent)
           .then((file) => {
             if (file === "SuccessfulNewCreation" || file === "SuccessfulReplacement") {
               this.infoHandler.incrementCount()
@@ -161,21 +166,8 @@ export class JournalFeatureHandler implements IFeatureHandler {
     })
   }
 
-  // async getCreationDates(){
-  //   let journalSettings = this.settingsHandler.journalSettings
-  //   let startDate = new Date()
-  //   let endDate = new Date()
-
-  //   getDateInput(this.plugin.app).then((dates) => {
-  //     console.log(dates)
-  //   })
-
-  //   return {startDate, endDate}
-  // }
-
   async createOlderJournalNotes(startDate: Date, endDate: Date) {
     // Create a journal note for each week in between
-
     // The loop that goes through all the dates
     let currentDate = startDate
     while (currentDate <= endDate) {
@@ -195,9 +187,25 @@ export class JournalFeatureHandler implements IFeatureHandler {
 
     this.plugin.addRibbonIcon(
       "calendar-minus",
-      "Add older notes from 2021",
+      "Add older journalling and linked notes",
       () => {
-        this.createOlderJournalNotes(new Date(2021, 1, 1), new Date())
+        let vault = this.plugin.app.vault
+        let app = this.plugin.app 
+        const container = document.createElement("div");
+        document.body.appendChild(container);
+        
+        const datePicker = new LuxonDatePickerModal(
+          app,
+          null, // Use current date
+          (selectedDate) => {
+            console.log("Selected date:", selectedDate.format("YYYY-MM-DD"));
+            // Do something with the selected date
+          }
+        );
+        
+        datePicker.open();
+
+        // this.createOlderJournalNotes(new Date(2021, 1, 1), new Date())
       })
 
     this.plugin.addCommand({

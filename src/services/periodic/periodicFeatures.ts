@@ -126,7 +126,10 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
 
     dailyNoteContent += links
 
-    vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath, formatDate(dailySettings.namingFormat, date), dailyNoteContent)
+    vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath
+      , formatDate(dailySettings.namingFormat, date)
+      , true // needs changing
+      , dailyNoteContent)
       .then(() => {
         this.infoHandler.incrementDailyCount()
         if (dailySettings.reminderOn) {
