@@ -13,7 +13,9 @@ import { PeriodicFeaturesHandler } from "../periodic/periodicFeatures"
 import { nanoid } from "nanoid"
 import { PluginReminder, ReminderType } from "../functional/reminder/reminderInfo"
 import { NotificationLocation } from "../functional/notification/notificationInfo"
-import { DatePickerModal, LuxonDatePickerModal, PopupDatePicker } from "src/ui_elements/dateInputModal"
+import { DateRangeModal } from "src/ui_elements/dateInput/dateInputModal"
+import { end } from "@popperjs/core"
+import { DateTime } from "luxon"
 
 export class JournalFeatureHandler implements IFeatureHandler {
   // #region Variable Declartion
@@ -86,7 +88,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
         let nextJournalName = formatDate(journalSettings.namingFormat, nextDate)
         
         // Get the template file frontmatter
-        const regex = /^---\n([\s\S]*?)\n---\n/;
+        const regex = /^---\n([\s\S]*?)\n---\n/
         let frontmatter = templateString.match(regex)
         if (frontmatter != null) {
           journalContent = frontmatter[0]
@@ -189,23 +191,22 @@ export class JournalFeatureHandler implements IFeatureHandler {
       "calendar-minus",
       "Add older journalling and linked notes",
       () => {
-        let vault = this.plugin.app.vault
-        let app = this.plugin.app 
-        const container = document.createElement("div");
-        document.body.appendChild(container);
-        
-        const datePicker = new LuxonDatePickerModal(
-          app,
-          null, // Use current date
-          (selectedDate) => {
-            console.log("Selected date:", selectedDate.format("YYYY-MM-DD"));
-            // Do something with the selected date
+        new DateRangeModal(
+          this.plugin.app , 
+          (startDate, endDate) => {
+          if (startDate instanceof DateTime && endDate instanceof DateTime) {
+            this.plugin.debugger.log(
+              `'Date range selected:' ${startDate.toFormat('yyyy-MM-dd')} to ${endDate.toFormat('yyyy-MM-dd')}`
+            )
+            // this.createOlderJournalNotes(startDate, endDate)
           }
-        );
-        
-        datePicker.open();
-
-        // this.createOlderJournalNotes(new Date(2021, 1, 1), new Date())
+        },
+        {
+          openPickerByDefault: true,
+          modalHeaderText: "Choose Journal Creation Dates",
+          descText: "Select dates for which journal notes should be created for"
+        }
+      ).open()
       })
 
     this.plugin.addCommand({

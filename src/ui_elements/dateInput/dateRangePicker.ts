@@ -16,13 +16,11 @@ export class DateRangePicker {
   private onSelectCallback: (startDate: DateTime | null, endDate: DateTime | null) => void
   private dateFormat: string
   private isVisible: boolean = false
-  // private clickOutsideHandler: (e: MouseEvent) => void
+  private clickOutsideHandler: (e: MouseEvent) => void
   private selectionStart: DateTime | null = null
   private selectionPhase: 'first' | 'second' = 'first'
   // IMPORTANT FLAG: Controls whether this is a single date or range picker
   private singleDateMode: boolean
-  
-  private isSelectFocused: boolean = false;
 
   constructor(
     app: App,
@@ -167,11 +165,7 @@ export class DateRangePicker {
     monthSelect.addEventListener("mousedown", (e) => {
       e.stopPropagation(); // Remove preventDefault() if present
       // Force focus to ensure dropdown opens
-      let el = e.currentTarget as HTMLSelectElement
-      if (el.className != "month-year-dropdown"){
-        console.log(el);
-        (e.currentTarget as HTMLSelectElement).focus();
-      }
+      (e.currentTarget as HTMLSelectElement).focus();
     });
     
     yearSelect.addEventListener("mousedown", (e) => {
@@ -179,26 +173,12 @@ export class DateRangePicker {
       (e.currentTarget as HTMLSelectElement).focus();
     });
     
+    
     monthSelect.addEventListener("change", (e) => {
       e.stopPropagation();
       this.activeDate = this.activeDate.set({ month: parseInt(monthSelect.value) })
       this.renderCalendar()
     })
-
-    // In createCalendarStructure(), add focus/blur handlers to the selects:
-    monthSelect.addEventListener('focus', () => {
-      this.isSelectFocused = true;
-    });
-    monthSelect.addEventListener('blur', () => {
-      this.isSelectFocused = false;
-    });
-
-    yearSelect.addEventListener('focus', () => {
-      this.isSelectFocused = true;
-    });
-    yearSelect.addEventListener('blur', () => {
-      this.isSelectFocused = false;
-    });
     
     yearSelect.addEventListener("change", (e) => {
       e.stopPropagation();
@@ -261,23 +241,6 @@ export class DateRangePicker {
     })
   }
 
-  // Replace the clickOutsideHandler with this simplified version
-  private clickOutsideHandler = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    
-    // Always allow select interactions
-    if (this.isSelectFocused || this.isSelectElement(target)) {
-      return;
-    }
-
-    // Check if clicking outside the popup and inputs
-    if (!this.popupEl.contains(target) && 
-        target !== this.startInputEl && 
-        target !== this.endInputEl) {
-      this.hide();
-    }
-  };
-
   private setupEvents() {
     // Click on input to show calendar
     this.startInputEl.addEventListener("click", (e) => {
@@ -302,63 +265,69 @@ export class DateRangePicker {
       })
     }
 
-    // // Handle clicking outside with improved dropdown handling
-    // this.clickOutsideHandler = (e: MouseEvent) => {
-    //   const target = e.target as HTMLElement
+    // Handle clicking outside with improved dropdown handling
+    this.clickOutsideHandler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
 
-    //   // Always allow select elements to work
-    //   if (this.isSelectElement(target)) {
-    //     // Special handling for native select dropdowns
-    //     const selectEl = target.closest('select');
-    //     if (selectEl) {
-    //       // Keep popup open until select interaction completes
-    //       const handleBlur = () => {
-    //         setTimeout(() => {
-    //           if (!this.isInPopup(document.activeElement as HTMLElement)) {
-    //             this.hide();
-    //           }
-    //           selectEl.removeEventListener('blur', handleBlur);
-    //         }, 10);
-    //       };
-    //       selectEl.addEventListener('blur', handleBlur);
-    //     }
-    //     return;
-    //   }
+      // Always allow select elements to work
+      if (this.isSelectElement(target)) {
+        // Special handling for native select dropdowns
+        const selectEl = target.closest('select');
+        if (selectEl) {
+          // Keep popup open until select interaction completes
+          const handleBlur = () => {
+            setTimeout(() => {
+              if (!this.isInPopup(document.activeElement as HTMLElement)) {
+                this.hide();
+              }
+              selectEl.removeEventListener('blur', handleBlur);
+            }, 10);
+          };
+          selectEl.addEventListener('blur', handleBlur);
+        }
+        return;
+      }
 
-    //   // Add this check first - if interacting with a native select dropdown
-    //   console.log(`Active tag name: ${document.activeElement?.tagName}`)
-    //   if (document.activeElement?.tagName === 'SELECT') {
-    //     console.log("Dropdown menus clicked")
-    //     return;
-    //   }
-    //   // Don't close if clicking within the popup
-    //   if (this.popupEl.contains(target)) {
-    //     return;
-    //   }
+      // Add this check first - if interacting with a native select dropdown
+      console.log(`Active tag name: ${document.activeElement?.tagName}`)
+      if (document.activeElement?.tagName === 'SELECT') {
+        console.log("Dropdown menus clicked")
+        return;
+      }
+      // Don't close if clicking within the popup
+      if (this.popupEl.contains(target)) {
+        return;
+      }
       
-    //   // Don't close if clicking the input elements
-    //   if (target === this.startInputEl || target === this.endInputEl) {
-    //     return;
-    //   }
+      // Don't close if clicking the input elements
+      if (target === this.startInputEl || target === this.endInputEl) {
+        return;
+      }
       
-    //   // Don't close if clicking on select elements or their options
-    //   // This more robust check handles both the select and its dropdown options
-    //   if (target.tagName === 'OPTION' || target.tagName === 'SELECT' || 
-    //       target.closest('select') || target.closest('option')) {
-    //     return;
-    //   }
+      // Don't close if clicking on select elements or their options
+      // This more robust check handles both the select and its dropdown options
+      if (target.tagName === 'OPTION' || target.tagName === 'SELECT' || 
+          target.closest('select') || target.closest('option')) {
+        return;
+      }
       
-    //   // Add a small delay before hiding to allow selections to complete
-    //   setTimeout(() => {
-    //     this.hide();
-    //   }, 100);
-    // }
+      // Add a small delay before hiding to allow selections to complete
+      setTimeout(() => {
+        this.hide();
+      }, 100);
+    }
   }
 
   // Add these new helper methods
   private isSelectElement(target: EventTarget | null): boolean {
     const el = target as HTMLElement;
     return el?.tagName === 'SELECT' || el?.closest('select') !== null;
+  }
+
+  private isInPopup(target: HTMLElement): boolean {
+    return this.popupEl.contains(target) || 
+          target === this.startInputEl ||
+          target === this.endInputEl;
   }
 
   private positionPopup(referenceEl: HTMLElement) {
