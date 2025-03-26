@@ -1,7 +1,5 @@
 export let date_range_picker_style = `
 .date-range-picker {
-  position: absolute;
-  z-index: 1000;
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
@@ -27,8 +25,6 @@ export let date_range_picker_style = `
   font-weight: bold;
   display: flex;
   align-items: center;
-  gap: 5px;
-  position: relative;
 }
 
 .month-year-dropdown {
@@ -40,11 +36,9 @@ export let date_range_picker_style = `
   cursor: pointer;
   font-size: 0.9em;
 
-  position: absolute;
-  z-index: 100000000; /* Ensure it stays on top */
 }
 
-.month-year-dropdown:focus-within {
+.month-year-dropdown:focus {
   outline: 1px solid var(--interactive-accent);
 }
 

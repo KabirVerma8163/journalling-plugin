@@ -5,56 +5,50 @@ import { parseDate } from "./dates"
 
 export class DateRangePicker {
   private app: App
-
-  private dateFormat: string
-  private startDate: DateTime | null
-  private endDate: DateTime | null
-  private activeDate: DateTime
-
   private startInputEl: HTMLInputElement
   private endInputEl: HTMLInputElement
   private popupEl: HTMLElement
+  private startDate: DateTime | null
+  private endDate: DateTime | null
+  private activeDate: DateTime
   private calendarEl: HTMLElement
   private monthYearEl: HTMLElement
-  private statusEl: HTMLElement
-
   private onSelectCallback: (startDate: DateTime | null, endDate: DateTime | null) => void
-  private clickOutsideHandler: (e: MouseEvent) => void
-
+  private dateFormat: string
   private isVisible: boolean = false
+  private clickOutsideHandler: (e: MouseEvent) => void
   private selectionStart: DateTime | null = null
   private selectionPhase: 'first' | 'second' = 'first'
-
   // IMPORTANT FLAG: Controls whether this is a single date or range picker
   private singleDateMode: boolean
+  private statusEl: HTMLElement
 
   constructor(
     app: App,
-    rangeInputSettingEl: HTMLInputElement,
     options: {
+      startEl: HTMLInputElement,
+      endEl: HTMLInputElement,
+      onSelect?: (startDate: DateTime | null, endDate: DateTime | null) => void,
       initialStartDate?: DateTime | Date | string | null,
       initialEndDate?: DateTime | Date | string | null,
       dateFormat?: string,
-      singleDateMode?: boolean, // Set to true for single date selection
-      onSelect?: (startDate: DateTime | null, endDate: DateTime | null) => void,
+      // IMPORTANT OPTION: Set to true for single date selection
+      singleDateMode?: boolean
     }
   ) {
-
-        // Create hidden container for the date picker
-    // Apply styles to hide the inputs but keep them functional
-    const pickerContainer = rangeInputSettingEl.createDiv({ cls: 'date-range-picker-container' })
-    pickerContainer.style.position = 'absolute'
-    pickerContainer.style.top = '0'
-    pickerContainer.style.left = '0'
-    pickerContainer.style.height = '0'
-    pickerContainer.style.overflow = 'hidden'
-
     this.app = app
+    this.startInputEl = options.startEl
+    this.endInputEl = options.endEl
     this.dateFormat = options.dateFormat || "yyyy-MM-dd"
     // Initialize single date mode flag
     this.singleDateMode = options.singleDateMode || false
     
-    this.onSelectCallback = options.onSelect || ((startDate, endDate) => {})
+    this.onSelectCallback = options.onSelect || ((startDate, endDate) => {
+      this.startInputEl.value = startDate ? startDate.toFormat(this.dateFormat) : ''
+      if (!this.singleDateMode) {
+        this.endInputEl.value = endDate ? endDate.toFormat(this.dateFormat) : ''
+      }
+    })
     
     // Initialize dates
     this.startDate = options.initialStartDate ? parseDate(options.initialStartDate, this.dateFormat) : null
@@ -536,10 +530,6 @@ export class DateRangePicker {
       this.endInputEl.removeEventListener("click", this.show.bind(this, this.endInputEl))
       this.endInputEl.removeEventListener("focus", this.show.bind(this, this.endInputEl))
     }
-
-//     var old_element = document.getElementById("btn");
-// var new_element = old_element.cloneNode(true);
-// old_element.parentNode.replaceChild(new_element, old_element);
     
     // Remove popup element
     this.popupEl.remove()

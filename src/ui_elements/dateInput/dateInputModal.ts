@@ -1,18 +1,17 @@
 import { App, Modal, Setting } from "obsidian"
 import { DateTime } from "luxon"
 import { DateRangePicker } from "./dateRangePicker"
-import { Obj } from "@popperjs/core"
 
-/**
- * A popup date range modal that allows selecting a date range with a single input
- */
+
 export class DateRangeModal extends Modal {
   startDate: DateTime | null = null
   endDate: DateTime | null = null
   dateFormat: string
+
   onSubmit: (startDate: DateTime | null, endDate: DateTime | null) => void
   options: Object
   rangeInput: HTMLInputElement
+  datePicker: DateRangePicker
   
   modalHeaderText?: string
   dateOptionText?: string
@@ -21,7 +20,6 @@ export class DateRangeModal extends Modal {
   // Flags
   openPickerByDefault: boolean // true to open the picker when modal opens
   singleDateMode: boolean // true for single date selection mode instead of range
-
   
   constructor(
     app: App,
@@ -43,7 +41,7 @@ export class DateRangeModal extends Modal {
     this.onSubmit = onSubmit
     this.startDate = options.initialStartDate || null
     this.endDate = options.initialEndDate || null
-    this.dateFormat = options.dateFormat || "d MMM yy"
+    this.dateFormat = options.dateFormat || "d MMMyy"
     this.openPickerByDefault = options.openPickerByDefault || false
     this.singleDateMode = options.singleDateMode || false
 
@@ -73,62 +71,29 @@ export class DateRangeModal extends Modal {
         }
       })
     
-    // Create hidden container for the date picker
-    const pickerContainer = contentEl.createDiv({ cls: 'date-range-picker-container' })
-    
-    // Create hidden input elements for the date picker to attach to
-    const startInputEl = pickerContainer.createEl('input', { 
-      type: 'text',
-      cls: 'hidden-date-input'
-    })
-    
-    const endInputEl = pickerContainer.createEl('input', { 
-      type: 'text',
-      cls: 'hidden-date-input'
-    })
-    
-    // Apply styles to hide the inputs but keep them functional
-    pickerContainer.style.position = 'absolute'
-    pickerContainer.style.top = '0'
-    pickerContainer.style.left = '0'
-    pickerContainer.style.height = '0'
-    pickerContainer.style.overflow = 'hidden'
-    
-    // Initialize values if provided
-    if (this.startDate) {
-      startInputEl.value = this.startDate.toFormat(this.dateFormat)
-    }
-    
-    if (this.endDate) {
-      endInputEl.value = this.endDate.toFormat(this.dateFormat)
-    }
-    
     // Create modified date picker that works with range or single date selection
-    const datePicker = new DateRangePicker(this.app, {
-      startEl: startInputEl,
-      endEl: endInputEl,
-      initialStartDate: this.startDate,
-      initialEndDate: this.endDate,
-      dateFormat: this.dateFormat,
-      // IMPORTANT: Pass through single date mode option to the picker
-      singleDateMode: this.singleDateMode,
-      onSelect: (start, end) => {
-        this.startDate = start
-        this.endDate = end
-        this.updateInputDisplay()
-      }
-    })
+    this.datePicker = new DateRangePicker(
+      this.app, 
+      this.rangeInput,
+      {
+        initialStartDate: this.startDate,
+        initialEndDate: this.endDate,
+        dateFormat: this.dateFormat,
+        singleDateMode: this.singleDateMode, // Pass single date mode option to the picker
+        onSelect: (start, end) => {
+          this.startDate = start
+          this.endDate = end
+          this.updateInputDisplay()
+    }})
     
     // When clicking on the visible input, show the date picker
     this.rangeInput.addEventListener('click', () => {
-      datePicker.show(this.rangeInput)
+      this.datePicker.show(this.rangeInput)
     })
     
-    // IMPORTANT: Auto-open the date picker if the flag is set
-    if (this.openPickerByDefault) {
-      // Use setTimeout to ensure the modal is fully rendered before showing the picker
-      setTimeout(() => {
-        datePicker.show(this.rangeInput)
+    if (this.openPickerByDefault) { // IMPORTANT: Auto-open the date picker on flag
+      setTimeout(() => { // Use setTimeout to ensure the modal is fully rendered
+        this.datePicker.show(this.rangeInput)
       }, 100)
     }
     
@@ -148,31 +113,22 @@ export class DateRangeModal extends Modal {
             this.close()
           })
       )
-    
-    // Clean up when modal closes
-    this.onClose = () => {
-      datePicker.destroy()
-    }
   }
-  
+
   // Updates the visible input based on selected dates
   updateInputDisplay() {
-    if (this.singleDateMode) {
-      // Single date mode - just show start date
+    if (this.singleDateMode) { // Single date mode - just show start date
       if (this.startDate) {
         this.rangeInput.value = this.startDate.toFormat(this.dateFormat)
       } else {
         this.rangeInput.value = ''
       }
-    } else {
-      // Range mode
+    } else { // Range mode
       if (this.startDate && this.endDate) {
-        if (this.startDate.hasSame(this.endDate, 'day')) {
-          // Single day selection
+        if (this.startDate.hasSame(this.endDate, 'day')) { // Single day selection
           this.rangeInput.value = this.startDate.toFormat(this.dateFormat)
-        } else {
-          // Date range
-          this.rangeInput.value = `${this.startDate.toFormat(this.dateFormat)} - ${this.endDate.toFormat(this.dateFormat)}`
+        } else { // Date range
+          this.rangeInput.value = `${this.startDate.toFormat(this.dateFormat)} to ${this.endDate.toFormat(this.dateFormat)}`
         }
       } else if (this.startDate) {
         this.rangeInput.value = this.startDate.toFormat(this.dateFormat)
@@ -185,5 +141,6 @@ export class DateRangeModal extends Modal {
   onClose() {
     const { contentEl } = this
     contentEl.empty()
+    this.datePicker.destroy()
   }
 }
