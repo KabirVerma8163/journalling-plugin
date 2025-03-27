@@ -5,7 +5,6 @@ import { parseDate } from "./dates"
 
 export class DateRangePicker {
   private app: App
-
   private dateFormat: string
   private startDate: DateTime | null
   private endDate: DateTime | null

@@ -8,6 +8,7 @@ export let date_range_picker_style = `
   display: none;
   padding: 12px;
   width: 280px;
+  z-index: 9999;
 }
 
 .date-range-picker.visible {
@@ -105,68 +106,46 @@ export let date_range_picker_style = `
   color: var(--text-on-accent);
 }
 
-.day {
-  padding: 8px;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 0.9em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 20px;
-  width: 20px;
-  margin: 2px auto;
+@media (max-width: 480px) {
+  .date-range-picker {
+    padding: 8px;
+    max-width: 260px;
+  }
+  
+  .date-header {
+    margin-bottom: 10px;
+  }
+  
+  .month-year-container {
+    font-size: 0.9em;
+    padding: 0.3em;
+  }
+  
+  .month-year-dropdown {
+    padding: 3px 6px;
+    font-size: 0.85em;
+  }
+  
+  .dropdown-spacer {
+    width: 0.2em;
+  }
+  
+  .nav-btn {
+    font-size: 1em;
+    padding: 3px 8px;
+  }
+  
+  .day-header {
+    font-size: 0.75em;
+    padding: 3px 0;
+  }
+  
+  .button-container {
+    margin-top: 8px;
+    gap: 6px;
+  }
 }
 
-.day:hover {
-  background-color: var(--background-modifier-hover);
-}
-
-.day.selected-start {
-  background-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
-.day.selected-end {
-  background-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
-.day.in-range {
-  background-color: var(--interactive-accent-hover);
-}
-
-.day.different-month {
-  color: var(--text-faint);
-}
-
-.day.today {
-  border: 1px solid var(--interactive-accent);
-}
-
-.preview-in-range {
-  background-color: var(--interactive-accent-hover);
-  color: var(--text-on-accent);
-  border-radius: 4px;
-}
-
-.preview-end {
-  background-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border-radius: 4px;
-}
-
-.preview-in-range.different-month {
-  color: var(--text-faint);
-  background-color: var(--background-modifier-hover);
-}
-
-.preview-in-range.today {
-  background-color: var(--background-modifier-hover);
-  border: 2px solid var(--interactive-accent);
-  color: var(--interactive-accent);
-  border-radius: 50%;
-}
 .day {
   padding: 8px;
   cursor: pointer;

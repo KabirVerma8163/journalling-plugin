@@ -9,6 +9,7 @@ export class DateRangeModal extends Modal {
   dateFormat: string
 
   onSubmit: (startDate: DateTime | null, endDate: DateTime | null) => void
+  runWithOpen: (contentEl: HTMLElement) => void
   options: Object
   rangeInput: HTMLInputElement
   datePicker: DateRangePicker
@@ -24,6 +25,7 @@ export class DateRangeModal extends Modal {
   constructor(
     app: App,
     onSubmit: (startDate: DateTime | null, endDate: DateTime | null) => void,
+    runWithOpen: (contentEl: HTMLElement) => void,
     options: {
       initialStartDate?: DateTime | null,
       initialEndDate?: DateTime | null,
@@ -39,6 +41,7 @@ export class DateRangeModal extends Modal {
   ) {
     super(app)
     this.onSubmit = onSubmit
+    this.runWithOpen = runWithOpen
     this.startDate = options.initialStartDate || null
     this.endDate = options.initialEndDate || null
     this.dateFormat = options.dateFormat || "d MMMyy"
@@ -71,6 +74,7 @@ export class DateRangeModal extends Modal {
         }
       })
     
+    this.runWithOpen(contentEl)
     // Create modified date picker that works with range or single date selection
     this.datePicker = new DateRangePicker(
       this.app, 

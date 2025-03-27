@@ -1,4 +1,4 @@
-import { Command, TFile } from "obsidian"
+import { Command, getFrontMatterInfo, Setting, TFile } from "obsidian"
 import JournallingPlugin from "src/main"
 import { IFeatureHandler } from "src/services/features"
 import { IServiceMngr } from "src/services/servicesMngr"
@@ -16,6 +16,8 @@ import { NotificationLocation } from "../functional/notification/notificationInf
 import { DateRangeModal } from "src/ui_elements/dateInput/dateInputModal"
 import { end } from "@popperjs/core"
 import { DateTime } from "luxon"
+import { create } from "domain"
+import { start } from "repl"
 
 export class JournalFeatureHandler implements IFeatureHandler {
   // #region Variable Declartion
@@ -37,146 +39,49 @@ export class JournalFeatureHandler implements IFeatureHandler {
     this.commands = []
   }
 
-  async createJournalNote(date?: Date, fromCommand: boolean = false) {
-    // Get the path to the folder
+  async createJournalNote(
+    date: DateTime = firstSunday(DateTime.now()), 
+    fromCommand: boolean = false,
+    createDailes: boolean = true
+  ) { // Get the path to the folder
     let journalSettings = this.settingsHandler.journalSettings
-    let vault = this.plugin.app.vault
     let vaultManipulationService = this.serviceMngr.servicesMngr.vaultManipulationService
+    
+    let futureDates: DateTime[] = []
+    let journalContent = await this.makeJournalContent(date, futureDates)
+    if (journalContent == null) return
 
+    let folderPath = this.getJournalFolderPath(date)
+    let fileName = `/${formatDate(journalSettings.namingFormat, date.toJSDate())}.md`
 
-    if (date == undefined) {
-      date = new Date()
-    }
-    date = firstSunday(date)
-
-    let basicPath = this.getJournalFolderPath(date)
-
-    let templateString = ""
-    let templateFile = vault.getAbstractFileByPath(journalSettings.journalTemplatePath)
-    if (templateFile != null && templateFile instanceof TFile) {
-      await vault.read(templateFile).then((content) => {
-        templateString = content
-      })
-    }
-    // TODO add a feature for entry customization later.
-    // templateFile = vault.getAbstractFileByPath(journalSettings.entryTemplatePath)
-    // let entriesTemplateString = ""
-    // if (templateFile != null && templateFile instanceof TFile) {
-
-    // }
-
-    let dailyNamingFormat = ""
+    let serviceFeatureHandler: PeriodicFeaturesHandler
     this.serviceMngr.servicesMngr.serviceMngrs.forEach(service => {
-      if (service.name === "Periodic") {
-        let serviceFeatureHandler = service.featureHandler as PeriodicFeaturesHandler
-        dailyNamingFormat = this.serviceMngr.servicesMngr.settingsMngr.getPeriodicSettings().daily.namingFormat
-        if (dailyNamingFormat === "") {
-          dailyNamingFormat = DEFAULT_PERIODIC_SETTINGS.daily.namingFormat
-        }
+      if (service.name === "Periodic") { serviceFeatureHandler = service.featureHandler as PeriodicFeaturesHandler }
+    })
 
-        let journalContent = ""
-        let futureDate: Date
-        let futureDates: Date[] = []
-
-        if (!date) return
-        let previousDate = new Date(date)
-        previousDate.setDate(date.getDate() - 7)
-        let nextDate = new Date(date)
-        nextDate.setDate(date.getDate() + 7)
-
-        let previousJournalName = formatDate(journalSettings.namingFormat, previousDate)
-        let nextJournalName = formatDate(journalSettings.namingFormat, nextDate)
-        
-        // Get the template file frontmatter
-        const regex = /^---\n([\s\S]*?)\n---\n/
-        let frontmatter = templateString.match(regex)
-        if (frontmatter != null) {
-          journalContent = frontmatter[0]
-          templateString = templateString.replace(regex, "")
-        }
-
-        // Beginning links
-        let links = `#### [[${previousJournalName}|<--Last Week's Journal]] ++ [[${nextJournalName}|Next Week's Journal-->]]\n`
-        journalContent += links 
-        journalContent = journalContent + templateString + "\n"
-
-        // Daily note links
-        let dailyNoteLinks = ""
-        for (let i = 0; i < 7; i++) {
-          let startOfWeek = moment(date).startOf('week')
-          let futureMomentDate = startOfWeek.add(i, 'days')
-          futureDate = futureMomentDate.toDate()
-          let formattedFutureDate = formatDate(dailyNamingFormat, futureMomentDate.toDate())
-
-          dailyNoteLinks += `## [[${formattedFutureDate}]]\n  > Your entry\n\n`
-          futureDates.push(futureDate)
-        }
-        journalContent = journalContent.replace("{links}", dailyNoteLinks)
-
-        // Adding the ending links
-        journalContent = journalContent.replace("\n$", "links")
-        journalContent += links
-
-        let folderPath = basicPath
-        let filePath = basicPath + `/${formatDate(journalSettings.namingFormat)}.md`
-        let fileName = `/${formatDate(journalSettings.namingFormat, date)}.md`
-
-        vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath, fileName
-          , true // Needs changing
-          , journalContent)
-          .then((file) => {
-            if (file === "SuccessfulNewCreation" || file === "SuccessfulReplacement") {
-              this.infoHandler.incrementCount()
-              if (journalSettings.reminderOn) {
-                if (fromCommand) {
-                  futureDate = setReminderTime(journalSettings.reminderTime, futureDate)
-                }
-                let id = nanoid()
-                let reminder: PluginReminder = {
-                  id: `Journal-Note_${id}`,
-                  name: `Journalling: ${formatDate(journalSettings.namingFormat)}`,
-                  description: "A reminder to work on your daily note",
-                  type: ReminderType.Daily,
-                  dateActiveOn: futureDate.toISOString(),
-                  taskLengthMilliSec: 3000,
-                  deleteOnDone: true,
-                  snoozeCount: 0,
-                  deleteOnShow: true
-                }
-
-                let reminderService = this.serviceMngr.servicesMngr.reminderService
-                if (reminderService != undefined) {
-                  reminderService.featureHandler.addAndActivateNewReminder(reminder, {
-                    location: NotificationLocation.Both,
-                    // TODO make it on click
-                    runOnShow() {
-                      vaultManipulationService.featureHandler.openFile(filePath)
-                    },
-                    externalOnClick: (ev) => {
-                      this.plugin.debugger.log("External on click")
-                      vaultManipulationService.featureHandler.openFile(filePath)
-                    }
-                  })
-                }
-              }
-              futureDates.forEach(futureDate => {
-                serviceFeatureHandler.createDailyNote(futureDate)
-              })
-            }
+    vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath, fileName, journalContent)
+    .then((file) => {
+      if (file === "SuccessfulNewCreation" || file === "SuccessfulReplacement") {
+        this.infoHandler.incrementCount()
+        if (createDailes) {
+          futureDates.forEach(futureDate => {
+            serviceFeatureHandler.createDailyNote(futureDate.toJSDate())
           })
+        }
       }
     })
   }
 
-  async createOlderJournalNotes(startDate: Date, endDate: Date) {
+  // TODO give an option to choose between creating corresponding daily notes for your mass journal making or not. 
+  async createOlderJournalNotes(startDate: DateTime, endDate: DateTime, createDailes: boolean) {
     // Create a journal note for each week in between
     // The loop that goes through all the dates
     let currentDate = startDate
     while (currentDate <= endDate) {
-      this.createJournalNote(currentDate)
-      currentDate.setDate(currentDate.getDate() + 7)
+      this.createJournalNote(currentDate, false, createDailes = createDailes)
+      currentDate = currentDate.plus({ days: 7 })
     }
-    this.createJournalNote(endDate)
+    this.createJournalNote(endDate, false, createDailes = createDailes)
 
   }
 
@@ -191,15 +96,28 @@ export class JournalFeatureHandler implements IFeatureHandler {
       "calendar-minus",
       "Add older journalling and linked notes",
       () => {
+        let createDailies: boolean = true
         new DateRangeModal(
           this.plugin.app , 
           (startDate, endDate) => {
           if (startDate instanceof DateTime && endDate instanceof DateTime) {
             this.plugin.debugger.log(
-              `'Date range selected:' ${startDate.toFormat('yyyy-MM-dd')} to ${endDate.toFormat('yyyy-MM-dd')}`
+              `'Date range selected:' ${startDate.toFormat('yyyy-MM-dd')} to ${endDate.toFormat('yyyy-MM-dd')} \nboolean: ${createDailies}`
             )
-            // this.createOlderJournalNotes(startDate, endDate)
+            this.createOlderJournalNotes(startDate, endDate, createDailies)
           }
+        },
+        (contentEl) => {
+          // Create single input for date range display
+          const rangeInputSetting = new Setting(contentEl)
+            .setName('Create Dailies')
+            .setDesc('Do you want to make dailies for each journal note created')
+            .addToggle((toggle) => {
+              toggle.setValue(createDailies);
+              toggle.onChange(() => {
+                createDailies = toggle.getValue()
+              })
+            })
         },
         {
           openPickerByDefault: true,
@@ -224,42 +142,82 @@ export class JournalFeatureHandler implements IFeatureHandler {
     })
   }
 
-  async handleAutoCreateJournalNote() {
-    if (!this.settingsHandler.journalSettings.autoCreateOn) return
-    this.serviceMngr.servicesMngr.serviceMngrs.forEach(service => {
-      if (service.name === "Notifications") {
-        // Check if this week's journal note has been created
-        let journalSettings = this.settingsHandler.journalSettings
-        let vault = this.plugin.app.vault
-        let folderPath = this.getJournalFolderPath()
-        let fileName = `/${formatDate(journalSettings.namingFormat)}.md`
-        let filePath = folderPath + fileName
-        vault.adapter.exists(filePath).then((exists) => {
-          if (!exists) {
-            this.createJournalNote()
-          }
-        })
-      }
-    })
-  }
-
-  getJournalFolderPath(date?: Date): string {
-    if (date == undefined) {
-      date = new Date()
+  private getJournalFolderPath(date?: DateTime): string {
+    if (date === undefined) {
+      date = DateTime.now();  // Using Luxon for the current date
     }
-    let journalSettings = this.settingsHandler.journalSettings
-
-    let path = "/" === journalSettings.dirPath ? "" : "" + journalSettings.dirPath
-    if (path === "") path = "/"
+    let journalSettings = this.settingsHandler.journalSettings;
+  
+    let path = "/" === journalSettings.dirPath ? "" : "" + journalSettings.dirPath;
+    if (path === "") path = "/";
+    
     if (journalSettings.yearly.subDirOn) {
-      path += "/" + formatDate(journalSettings.yearly.subDirFormat, date)
+      path += "/" + formatDate(journalSettings.yearly.subDirFormat, date.toJSDate());
     }
     if (journalSettings.monthly.subDirOn) {
-      path += "/" + formatDate(journalSettings.monthly.subDirFormat, date)
+      path += "/" + formatDate(journalSettings.monthly.subDirFormat, date.toJSDate());
+    }
+  
+    return path;
+  }
+
+  private async makeJournalContent(
+    date: DateTime,
+    futureDates: DateTime[]
+  ): Promise<string | null> {
+    let journalSettings = this.settingsHandler.journalSettings
+    let journalContent = ""
+    let vault = this.plugin.app.vault
+
+    let dailyNamingFormat = this.serviceMngr.servicesMngr.settingsMngr.getPeriodicSettings().daily.namingFormat
+    if (dailyNamingFormat === "") {
+      dailyNamingFormat = DEFAULT_PERIODIC_SETTINGS.daily.namingFormat
+    }
+  
+    if (!date) return null;
+    let previousDate = date.minus({ days: 7 }).toJSDate();
+    let nextDate = date.plus({ days: 7 }).toJSDate();
+  
+    let previousJournalName = formatDate(journalSettings.namingFormat, previousDate);
+    let nextJournalName = formatDate(journalSettings.namingFormat, nextDate);
+    
+    // TODO add a feature for entry customization later.
+    let templateString = ""
+    let templateFile = vault.getAbstractFileByPath(journalSettings.journalTemplatePath)
+    if (templateFile != null && templateFile instanceof TFile) {
+      templateString = await vault.read(templateFile)
     }
 
-    return path
+    const frontMatterInfo = getFrontMatterInfo(templateString);
+    if (frontMatterInfo.exists) {
+      journalContent = frontMatterInfo.frontmatter
+      templateString = templateString.substring(frontMatterInfo.contentStart)
+    }
+  
+    // Beginning links
+    let links = `#### [[${previousJournalName}|<--Last Week's Journal]] ++ [[${nextJournalName}|Next Week's Journal-->]]\n`;
+    journalContent += links;
+    journalContent = journalContent + templateString + "\n";
+  
+    // Daily note links
+    let dailyNoteLinks = "";
+    for (let i = 0; i < 7; i++) {
+      let startOfWeek = date.startOf('week');
+      let futureDate = startOfWeek.plus({ days: i });
+      let formattedFutureDate = formatDate(dailyNamingFormat, futureDate.toJSDate());
+  
+      dailyNoteLinks += `## [[${formattedFutureDate}]]\n  > Your entry\n\n`;
+      futureDates.push(futureDate);
+    }
+    journalContent = journalContent.replace("{links}", dailyNoteLinks);
+  
+    // Adding the ending links
+    journalContent = journalContent.replace("\n$", "links");
+    journalContent += links;
+  
+    return journalContent;
   }
+  
 
   async cleanup() {
     this.plugin.debugger.log("Not yet implemented JournalFeatureHandler.cleanup()")

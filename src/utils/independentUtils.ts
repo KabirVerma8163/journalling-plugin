@@ -1,4 +1,5 @@
 import * as cronParser from 'cron-parser'
+import { DateTime } from 'luxon'
 import moment from 'moment'
 import { start } from 'repl'
 
@@ -68,9 +69,21 @@ export function formatDate(val: string, date?: Date) {
   return moment(date).format(val)
 }
 
-export function firstSunday(date: Date): Date {
-  let startOfWeek = moment(date).startOf('week')
-  return startOfWeek.toDate()
+// export function firstSunday(date: Date): Date {
+//   let startOfWeek = moment(date).startOf('week')
+//   return startOfWeek.toDate()
+// }
+
+// export function formatDate(val: string, date?: DateTime): string {
+//   if (date === undefined) {
+//     date = DateTime.now(); // Using Luxon to get the current date if undefined
+//   }
+//   return date.toFormat(val); // Luxon's toFormat() method is used for formatting
+// }
+
+export function firstSunday(date: DateTime): DateTime {
+  let startOfWeek = date.startOf('week'); // Luxon’s DateTime already works with the 'week' unit
+  return startOfWeek; // Returning as a DateTime object
 }
 
 export function setReminderTime(reminderTime: string, date?:Date){
