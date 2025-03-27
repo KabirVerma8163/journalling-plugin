@@ -265,25 +265,25 @@ export class DateRangePicker {
 
     // Simplified click outside handler that handles dropdowns properly
     this.clickOutsideHandler = (e: MouseEvent) => {
-    //   const target = e.target as HTMLElement
+      const target = e.target as HTMLElement
       
-    //   // Don't close when interacting with select elements
-    //   if (target.tagName === 'SELECT' || target.tagName === 'OPTION' || 
-    //       target.closest('select') || target.closest('option')) {
-    //     return
-    //   }
+      // Don't close when interacting with select elements
+      if (target.tagName === 'SELECT' || target.tagName === 'OPTION' || 
+          target.closest('select') || target.closest('option')) {
+        return
+      }
       
-    //   // Don't close if clicking within the popup
-    //   if (this.popupEl.contains(target)) {
-    //     return
-    //   }
+      // Don't close if clicking within the popup
+      if (this.popupEl.contains(target)) {
+        return
+      }
       
-    //   // Don't close if clicking the input elements
-    //   if (target === this.startInputEl || target === this.endInputEl) {
-    //     return
-    //   }
+      // Don't close if clicking the input elements
+      if (target === this.startInputEl || target === this.endInputEl) {
+        return
+      }
       
-    //   this.hide()
+      this.hide()
     }
   }
 
@@ -495,26 +495,26 @@ export class DateRangePicker {
   }
 
   private completeSelection(endDate: DateTime) {
-    // if (!this.selectionStart) return
+    if (!this.selectionStart) return
     
-    // // Determine which is start and which is end
-    // if (endDate < this.selectionStart) {
-    //   this.startDate = endDate
-    //   this.endDate = this.selectionStart
-    // } else {
-    //   this.startDate = this.selectionStart
-    //   this.endDate = endDate
-    // }
+    // Determine which is start and which is end
+    if (endDate < this.selectionStart) {
+      this.startDate = endDate
+      this.endDate = this.selectionStart
+    } else {
+      this.startDate = this.selectionStart
+      this.endDate = endDate
+    }
     
-    // // Reset selection state
-    // this.selectionStart = null
-    // this.selectionPhase = 'first'
+    // Reset selection state
+    this.selectionStart = null
+    this.selectionPhase = 'first'
     
-    // // Update status
-    // this.statusEl.textContent = "Select start date"
+    // Update status
+    this.statusEl.textContent = "Select start date"
     
-    // // Apply immediately
-    // this.onSelectCallback(this.startDate, this.endDate)
+    // Apply immediately
+    this.onSelectCallback(this.startDate, this.endDate)
     this.renderCalendar()
   }
 

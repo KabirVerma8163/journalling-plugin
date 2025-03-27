@@ -86,16 +86,16 @@ export class DateRangeModal extends Modal {
           this.updateInputDisplay()
     }})
     
-    // When clicking on the visible input, show the date picker
-    this.rangeInput.addEventListener('click', () => {
-      this.datePicker.show(this.rangeInput)
-    })
+    // // When clicking on the visible input, show the date picker
+    // this.rangeInput.addEventListener('click', () => {
+    //   this.datePicker.show(this.rangeInput)
+    // })
     
-    if (this.openPickerByDefault) { // IMPORTANT: Auto-open the date picker on flag
-      setTimeout(() => { // Use setTimeout to ensure the modal is fully rendered
-        this.datePicker.show(this.rangeInput)
-      }, 100)
-    }
+    // if (this.openPickerByDefault) { // IMPORTANT: Auto-open the date picker on flag
+    //   setTimeout(() => { // Use setTimeout to ensure the modal is fully rendered
+    //     this.datePicker.show(this.rangeInput)
+    //   }, 100)
+    // }
     
     // Add buttons
     new Setting(contentEl)

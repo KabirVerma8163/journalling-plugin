@@ -11,15 +11,22 @@ export class DateRangePicker {
   private endDate: DateTime | null
   private activeDate: DateTime
 
-  private startInputEl: HTMLInputElement
-  private endInputEl: HTMLInputElement
-  private popupEl: HTMLElement
+  private rangeInputSettingEl: HTMLInputElement
+  private pickerContainer: HTMLElement
+
+  private pickerEl: HTMLElement
   private calendarEl: HTMLElement
   private monthYearEl: HTMLElement
+  private monthSelect: HTMLSelectElement
+  private yearInput: HTMLInputElement
+  private dayEl :HTMLDivElement
+  private prevMonthBtn:HTMLButtonElement
+  private nextMonthBtn:HTMLButtonElement
   private statusEl: HTMLElement
 
   private onSelectCallback: (startDate: DateTime | null, endDate: DateTime | null) => void
   private clickOutsideHandler: (e: MouseEvent) => void
+  private onResizeDebounced: () => void
 
   private isVisible: boolean = false
   private selectionStart: DateTime | null = null
@@ -39,43 +46,33 @@ export class DateRangePicker {
       onSelect?: (startDate: DateTime | null, endDate: DateTime | null) => void,
     }
   ) {
-
-        // Create hidden container for the date picker
-    // Apply styles to hide the inputs but keep them functional
-    const pickerContainer = rangeInputSettingEl.createDiv({ cls: 'date-range-picker-container' })
-    pickerContainer.style.position = 'absolute'
-    pickerContainer.style.top = '0'
-    pickerContainer.style.left = '0'
-    pickerContainer.style.height = '0'
-    pickerContainer.style.overflow = 'hidden'
-
     this.app = app
     this.dateFormat = options.dateFormat || "yyyy-MM-dd"
-    // Initialize single date mode flag
-    this.singleDateMode = options.singleDateMode || false
-    
+    this.singleDateMode = options.singleDateMode || false // Initialize single date mode flag
     this.onSelectCallback = options.onSelect || ((startDate, endDate) => {})
     
     // Initialize dates
     this.startDate = options.initialStartDate ? parseDate(options.initialStartDate, this.dateFormat) : null
     this.endDate = options.initialEndDate ? parseDate(options.initialEndDate, this.dateFormat) : null
-    
     // Ensure end date is not before start date
     if (this.startDate && this.endDate && this.endDate < this.startDate) {
       this.endDate = this.startDate
     }
-    
-    // Set active date for calendar rendering
-    this.activeDate = this.startDate || DateTime.local()
+    this.activeDate = this.startDate || DateTime.local() // Set active date for calendar rendering
 
-    // Create the popup element
-    this.popupEl = document.createElement("div")
-    this.popupEl.className = "date-range-picker"
-    document.body.appendChild(this.popupEl)
+    this.rangeInputSettingEl = rangeInputSettingEl
+    // Create hidden date picker container & Apply styles to hide the inputs
+    if (rangeInputSettingEl.parentElement){
+      this.pickerContainer = rangeInputSettingEl.parentElement.createDiv({ cls: 'date-range-picker-container' })
+    }
+  
+    this.pickerContainer.className = "date-range-picker"
 
     this.addStyles() // Add styles
     this.createCalendarStructure() // Create the calendar structure
+    this.renderCalendar()
     this.setupEvents() // Set up events
+    // this.show()
   }
   
   private addStyles() {
@@ -86,35 +83,44 @@ export class DateRangePicker {
       attr: { id: "date-range-picker-styles" }
     })
 
-    // Add base styles from the imported style
     styleEl.textContent = date_range_picker_style
   }
 
   private createCalendarStructure() {
-    // Create header with month/year display and navigation buttons
-    const headerEl = this.popupEl.createDiv({ cls: "date-header" })
+    this.pickerEl = this.pickerContainer.createDiv({ cls: "simple-date-picker" }) // Create the main container
+    const headerEl = this.pickerEl.createDiv({ cls: "date-header" }) // Create header with month/year and navigation
     
-    const prevMonthBtn = headerEl.createEl("button", { 
+    this.prevMonthBtn = headerEl.createEl("button", { 
       cls: "nav-btn", 
       text: "←",
       attr: { "aria-label": "Previous month" }
     })
-    
-    // Create a clean month/year display without labels
-    const centerEl = headerEl.createDiv({ cls: "month-year-container" })
-    
-    // Create month dropdown with improved styling
-    const monthSelect = centerEl.createEl("select", { 
-      cls: "month-year-dropdown month-dropdown",
-      attr: { "aria-label": "Select month" }
+    const centerEl = headerEl.createDiv({ cls: "month-year-container" }) // Create month/year display
+    this.nextMonthBtn = headerEl.createEl("button", { 
+      cls: "nav-btn", 
+      text: "→",
+      attr: { "aria-label": "Next month" }
     })
     
+    this.prevMonthBtn.addEventListener("click", (e) => {
+      e.stopPropagation()
+      this.activeDate = this.activeDate.minus({ months: 1 })
+      this.renderCalendar()
+    })
+    this.nextMonthBtn.addEventListener("click", (e) => {
+      e.stopPropagation()
+      this.activeDate = this.activeDate.plus({ months: 1 })
+      this.renderCalendar()
+    })
+    
+    this.monthSelect = centerEl.createEl("select", { // Month dropdown
+      cls: "month-year-dropdown month-dropdown"
+    })
     const monthNames = Array.from({ length: 12 }, (_, i) => 
       DateTime.local(2000, i + 1).toFormat("MMMM")
     )
-    
     monthNames.forEach((month, idx) => {
-      const option = monthSelect.createEl("option", { 
+      const option = this.monthSelect.createEl("option", { 
         text: month, 
         value: (idx + 1).toString() 
       })
@@ -123,252 +129,55 @@ export class DateRangePicker {
         option.selected = true
       }
     })
-    
-    // Add small spacer
-    centerEl.createEl("span", { cls: "dropdown-spacer", text: " " })
-    
-    // Create year dropdown with improved styling
-    const yearSelect = centerEl.createEl("select", { 
-      cls: "month-year-dropdown year-dropdown",
-      attr: { "aria-label": "Select year" }
-    })
+
+    centerEl.createEl("span", { cls: "dropdown-spacer", text: " " }) // Add small spacer
     
     const currentYear = this.activeDate.year
-    
-    for (let year = currentYear - 10; year <= currentYear + 10; year++) {
-      const option = yearSelect.createEl("option", { 
-        text: year.toString(), 
-        value: year.toString() 
-      })
-      
-      if (year === currentYear) {
-        option.selected = true
-      }
-    }
-    
-    this.monthYearEl = centerEl
-    
-    const nextMonthBtn = headerEl.createEl("button", { 
-      cls: "nav-btn", 
-      text: "→",
-      attr: { "aria-label": "Next month" }
+    this.yearInput = centerEl.createEl("input", {
+      cls: "month-year-dropdown year-dropdown",
+      type: "text",
+      value: currentYear.toString()
     })
     
-    // Create calendar container
-    this.calendarEl = this.popupEl.createDiv({ cls: "calendar" })
+    this.yearInput.style.width = "8ch" // Set width to fit approximately 5 characters
+    
+    this.yearInput.addEventListener("change", (e) => {
+      e.stopPropagation()
+      const newYear = parseInt(this.yearInput.value, 10)
+      if (!isNaN(newYear)) {
+        this.activeDate = this.activeDate.set({ year: newYear })
+        this.renderCalendar()
+      }
+    })    
 
-    // Status message area - shows different text based on mode
-    this.statusEl = this.popupEl.createDiv({ cls: "selection-status" })
+    this.monthSelect.addEventListener("change", (e) => {
+      e.stopPropagation()
+      this.activeDate = this.activeDate.set({ month: parseInt(this.monthSelect.value) })
+      this.renderCalendar()
+    })
+    
+    this.monthYearEl = centerEl
+    this.calendarEl = this.pickerEl.createDiv({ cls: "calendar" }) // Create calendar grid container
+
+    this.statusEl = this.pickerContainer.createDiv({ cls: "selection-status" })
     if (this.singleDateMode) {
       this.statusEl.textContent = "Select date"
     } else {
       this.statusEl.textContent = "Select start date"
     }
-
-    // Create button container
-    const buttonContainer = this.popupEl.createDiv({ cls: "button-container" })
-    
-    const todayButton = buttonContainer.createEl("button", { text: "Today" })
-    const clearButton = buttonContainer.createEl("button", { text: "Clear" })
-    const applyButton = buttonContainer.createEl("button", { 
-      text: "Ok", 
-      cls: "mod-cta"
-    })
-    
-    // Set up dropdown event handlers with proper event bubbling management
-    // monthSelect.addEventListener("change", () => {
-    //   this.activeDate = this.activeDate.set({ month: parseInt(monthSelect.value) })
-    //   this.renderCalendar()
-    // })
-    
-    // yearSelect.addEventListener("change", () => {
-    //   this.activeDate = this.activeDate.set({ year: parseInt(yearSelect.value) })
-    //   this.renderCalendar()
-    // })
-    
-    // yearSelect.addEventListener("click", (e) => {
-    //   e.stopPropagation()
-    // })
-    
-    // prevMonthBtn.addEventListener("click", (e) => {
-    //   e.stopPropagation()
-    //   this.activeDate = this.activeDate.minus({ months: 1 })
-    //   this.renderCalendar()
-    // })
-    
-    // nextMonthBtn.addEventListener("click", (e) => {
-    //   e.stopPropagation()
-    //   this.activeDate = this.activeDate.plus({ months: 1 })
-    //   this.renderCalendar()
-    // })
-
-    // todayButton.addEventListener("click", (e) => {
-    //   e.stopPropagation()
-    //   const today = DateTime.local()
-    //   if (this.singleDateMode) {
-    //     // In single date mode, just set the date to today
-    //     this.startDate = today
-    //     this.endDate = today
-    //     this.onSelectCallback(this.startDate, this.endDate)
-    //     this.hide()
-    //   } else if (this.selectionPhase === 'first') {
-    //     this.selectionStart = today
-    //     this.selectionPhase = 'second'
-    //     this.statusEl.textContent = "Select end date"
-    //   } else {
-    //     this.completeSelection(today)
-    //   }
-    //   this.activeDate = today
-    //   this.renderCalendar()
-    // })
-
-    // clearButton.addEventListener("click", (e) => {
-    //   e.stopPropagation()
-    //   this.selectionStart = null
-    //   this.selectionPhase = 'first'
-    //   this.startDate = null
-    //   this.endDate = null
-    //   this.statusEl.textContent = this.singleDateMode ? "Select date" : "Select start date"
-    //   this.renderCalendar()
-    // })
-
-    // applyButton.addEventListener("click", (e) => {
-    //   e.stopPropagation()
-    //   // If in the middle of selection, use the current selection start as both start and end
-    //   if (this.selectionPhase === 'second' && this.selectionStart) {
-    //     this.startDate = this.selectionStart
-    //     this.endDate = this.selectionStart
-    //   }
-      
-    //   this.onSelectCallback(this.startDate, this.endDate)
-    //   this.hide()
-    // })
-  }
-
-  private setupEvents() {
-    // Click on input to show calendar
-    // this.startInputEl.addEventListener("click", (e) => {
-    //   e.stopPropagation()
-    //   this.show(this.startInputEl)
-    // })
-
-    // this.startInputEl.addEventListener("focus", (e) => {
-    //   e.stopPropagation()
-    //   this.show(this.startInputEl)
-    // })
-    
-    // if (!this.singleDateMode) {
-    //   this.endInputEl.addEventListener("click", (e) => {
-    //     e.stopPropagation()
-    //     this.show(this.endInputEl)
-    //   })
-
-    //   this.endInputEl.addEventListener("focus", (e) => {
-    //     e.stopPropagation()
-    //     this.show(this.endInputEl)
-    //   })
-    // }
-
-    // Simplified click outside handler that handles dropdowns properly
-    this.clickOutsideHandler = (e: MouseEvent) => {
-    //   const target = e.target as HTMLElement
-      
-    //   // Don't close when interacting with select elements
-    //   if (target.tagName === 'SELECT' || target.tagName === 'OPTION' || 
-    //       target.closest('select') || target.closest('option')) {
-    //     return
-    //   }
-      
-    //   // Don't close if clicking within the popup
-    //   if (this.popupEl.contains(target)) {
-    //     return
-    //   }
-      
-    //   // Don't close if clicking the input elements
-    //   if (target === this.startInputEl || target === this.endInputEl) {
-    //     return
-    //   }
-      
-    //   this.hide()
-    }
-  }
-
-  private positionPopup(referenceEl: HTMLElement) {
-    const rect = referenceEl.getBoundingClientRect()
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-    
-    this.popupEl.style.top = (rect.bottom + scrollTop) + 'px'
-    this.popupEl.style.left = (rect.left + scrollLeft) + 'px'
-    
-    // Check if the popup would go off the bottom of the screen
-    const popupRect = this.popupEl.getBoundingClientRect()
-    const viewportHeight = window.innerHeight
-    
-    if (rect.bottom + popupRect.height > viewportHeight) {
-      // Position above the input instead
-      this.popupEl.style.top = (rect.top + scrollTop - popupRect.height) + 'px'
-    }
-  }
-
-  public show(referenceEl: HTMLElement) {
-    if (this.isVisible) return
-    
-    this.isVisible = true
-    this.popupEl.addClass("visible")
-    this.positionPopup(referenceEl)
-    
-    // Reset selection state if no dates are already selected
-    if (!this.startDate && !this.endDate) {
-      this.selectionStart = null
-      this.selectionPhase = 'first'
-      this.statusEl.textContent = this.singleDateMode ? "Select date" : "Select start date"
-    } else {
-      // If dates are already selected, use them
-      this.selectionStart = null
-      this.selectionPhase = 'first'
-    }
-    
-    this.renderCalendar()
-    
-    // // Remove existing handler if any
-    // document.removeEventListener("mousedown", this.clickOutsideHandler)
-    
-    // // Add click outside handler with a slight delay to ensure proper initialization
-    // setTimeout(() => {
-    //   document.addEventListener("mousedown", this.clickOutsideHandler)
-    // }, 50)
-  }
-
-  public hide() {
-    if (!this.isVisible) return
-    
-    this.isVisible = false
-    this.popupEl.removeClass("visible")
-    
-    // Remove click outside handler
-    document.removeEventListener("mousedown", this.clickOutsideHandler)
   }
 
   public renderCalendar() {
-    // Update the selects in the header
-    const monthSelect = this.monthYearEl.querySelector('select:first-child') as HTMLSelectElement
-    const yearSelect = this.monthYearEl.querySelector('select:last-child') as HTMLSelectElement
-    
-    // if (monthSelect) {
-    //   monthSelect.value = this.activeDate.month.toString()
-    // }
-    
-    // if (yearSelect) {
-    //   yearSelect.value = this.activeDate.year.toString()
-    // }
+    // Update the month/year dropdowns
+    this.monthSelect.value = this.activeDate.month.toString()
+    this.yearInput.value = this.activeDate.year.toString()
     
     // Clear the calendar
     this.calendarEl.empty()
     
     // Add day headers (Mon, Tue, etc.)
     const weekdays = Array.from({ length: 7 }, (_, i) => 
-      DateTime.local(2000, 1, 3 + i).toFormat('ccc') // Start with Monday (3rd Jan 2000 was a Monday)
+      DateTime.local(2000, 1, 3 + i).toFormat('ccc') // Start with Monday
     )
     
     weekdays.forEach(day => {
@@ -378,8 +187,7 @@ export class DateRangePicker {
     // First day of current month
     let monthStart = this.activeDate.startOf('month')
     
-    // Find the Monday before or on the start of the month
-    // In Luxon, 1 is Monday, 7 is Sunday
+    // Find the Monday before or on the start of the month, In Luxon, 1 is Monday, 7 is Sunday
     const dayOfWeek = monthStart.weekday
     let viewStart = monthStart.minus({ days: (dayOfWeek - 1) % 7 })
     
@@ -391,87 +199,68 @@ export class DateRangePicker {
       const isDifferentMonth = currentDate.month !== this.activeDate.month
       const isToday = currentDate.hasSame(today, 'day')
       
-      // Determine if the date is selected or in range
-      const isStartDate = this.startDate && currentDate.hasSame(this.startDate, 'day')
-      const isEndDate = this.endDate && currentDate.hasSame(this.endDate, 'day')
-      const isInRange = this.startDate && this.endDate && 
-                        currentDate > this.startDate && 
-                        currentDate < this.endDate
-                        
-      // Temporary selection highlight
-      const isTempStart = this.selectionStart && currentDate.hasSame(this.selectionStart, 'day')
-      
-      const dayEl = this.calendarEl.createDiv({ 
-        cls: `day 
-            ${isDifferentMonth ? "different-month" : ""} 
-            ${isToday ? "today" : ""} 
-            ${isStartDate ? "selected-start" : ""} 
-            ${isEndDate ? "selected-end" : ""} 
-            ${isInRange ? "in-range" : ""}
-            ${isTempStart ? "temp-selected" : ""}`,
+      this.dayEl = this.calendarEl.createDiv({ 
+        cls: `day ${isDifferentMonth ? "different-month" : ""} ${isToday ? "today" : ""}`,
         text: currentDate.day.toString()
       })
       
-      // dayEl.addEventListener("click", (e) => {
-      //   // e.stopPropagation() // Prevent event from bubbling
-      //   this.handleDateClick(currentDate)
-      // })
+      // Add date attribute for potential future functionality
+      this.dayEl.dataset.date = currentDate.toISODate() as string
       
-      // // Add hover effect for range preview
-      // if (this.selectionPhase === 'second' && this.selectionStart) {
-      //   dayEl.addEventListener("mouseenter", () => {
-      //     this.showPreviewRange(currentDate)
-      //   })
-      // }
+      this.dayEl.addEventListener("click", (e) => {
+        e.stopPropagation() // Prevent event from bubbling
+        this.handleDateClick(currentDate)
+      })
+
+      if (this.selectionPhase === 'second' && this.selectionStart) {
+        this.dayEl.addEventListener("mouseenter", () => {
+          this.showPreviewRange(currentDate)
+        })
+      }
+
     }
   }
 
-  private showPreviewRange(hoverDate: DateTime) {
-    if (!this.selectionStart || this.selectionPhase !== 'second' || this.singleDateMode) return
-    
-    // Clear existing preview classes
-    const previewElements = this.calendarEl.querySelectorAll('.preview-in-range, .preview-end')
-    previewElements.forEach(el => {
-      el.classList.remove('preview-in-range', 'preview-end')
-    })
-    
-    // Add preview classes
-    const days = this.calendarEl.querySelectorAll('.day')
-    const startTs = this.selectionStart.toMillis()
-    const endTs = hoverDate.toMillis()
-    
-    days.forEach(day => {
-      const dayNum = parseInt(day.textContent || '0')
-      const monthOffset = day.classList.contains('different-month') ? 
-        (day.previousElementSibling?.classList.contains('different-month') ? -1 : 1) : 0
-      
-      // Create a date for this day element
-      const dayDate = this.activeDate
-        .set({ day: dayNum })
-        .plus({ months: monthOffset })
-      
-      const dayTs = dayDate.toMillis()
-      
-      // Check if this day is in the preview range
-      if (startTs < endTs) {
-        // Normal direction
-        if (dayTs > startTs && dayTs < endTs) {
-          day.classList.add('preview-in-range')
-        } else if (dayTs === endTs) {
-          day.classList.add('preview-end')
-        }
-      } else {
-        // Reverse direction (end is before start)
-        if (dayTs < startTs && dayTs > endTs) {
-          day.classList.add('preview-in-range')
-        } else if (dayTs === endTs) {
-          day.classList.add('preview-end')
-        }
+  private setupEvents(){
+    // Simplified click outside handler that handles dropdowns properly
+    this.clickOutsideHandler = (e: MouseEvent) => {
+      e.stopPropagation()
+      const target = e.target as HTMLElement
+      // Don't close if clicking within the popup
+      if (this.pickerContainer.contains(target)) {
+        return
       }
+      this.hide()
+    }
+
+    this.rangeInputSettingEl.addEventListener("click", (e) => {
+      e.stopPropagation()
+      // console.log("Range Input Clicked")
+      this.show()
     })
+
+    this.onResizeDebounced = (): void => { this.positionPopup() }
+    window.addEventListener("resize", this.onResizeDebounced)
   }
 
-  // IMPORTANT FUNCTION: This handles date clicks differently based on singleDateMode
+  private positionPopup(referenceEl: HTMLElement = this.rangeInputSettingEl) {
+    const rect = referenceEl.getBoundingClientRect()
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    
+    this.pickerContainer.style.top = (rect.bottom + scrollTop) + 'px'
+    this.pickerContainer.style.left = (rect.left + scrollLeft) + 'px'
+    
+    // Check if the popup would go off the bottom of the screen
+    const popupRect = this.pickerContainer.getBoundingClientRect()
+    const viewportHeight = window.innerHeight
+    
+    if (rect.bottom + popupRect.height > viewportHeight) {
+      // Position above the input instead
+      this.pickerContainer.style.top = (rect.top + scrollTop - popupRect.height) + 'px'
+    }
+  }
+
   private handleDateClick(date: DateTime) {
     if (this.singleDateMode) {
       // In single date mode, just select the date and we're done
@@ -500,48 +289,159 @@ export class DateRangePicker {
     }
   }
 
-  private completeSelection(endDate: DateTime) {
-    // if (!this.selectionStart) return
+  private showPreviewRange(hoverDate: DateTime) {
+    if (!this.selectionStart || this.selectionPhase !== 'second' || this.singleDateMode) return
     
-    // // Determine which is start and which is end
-    // if (endDate < this.selectionStart) {
-    //   this.startDate = endDate
-    //   this.endDate = this.selectionStart
+    // Clear existing preview classes
+    const previewElements = this.calendarEl.querySelectorAll('.preview-in-range, .preview-end')
+    previewElements.forEach(el => {
+      el.classList.remove('preview-in-range', 'preview-end')
+    })
+    
+    // Add preview classes
+    const days = Array.from(this.calendarEl.querySelectorAll('.day'))
+    const startTs = this.selectionStart.toMillis()
+    const endTs = hoverDate.toMillis()
+    
+    // Find the first day of the current month (day with text "1" and not different-month)
+    const firstDayOfCurrentMonth = days.findIndex(day => 
+      day.textContent?.trim() === "1" && !day.classList.contains('different-month')
+    )
+    
+    // Find the last day of the current month (largest day number that's not different-month)
+    let lastDayOfCurrentMonth = 0
+    let lastDayValue = 0
+    days.forEach((day, index) => {
+      const dayNum = parseInt(day.textContent?.trim() || "0")
+      if (!day.classList.contains('different-month') && dayNum > lastDayValue) {
+        lastDayValue = dayNum
+        lastDayOfCurrentMonth = index
+      }
+    })
+    
+    days.forEach((day, index) => {
+      const dayNum = parseInt(day.textContent?.trim() || '0')
+      if (dayNum <= 0) return
+      
+      // Determine month offset based on position and value
+      let monthOffset = 0
+      if (day.classList.contains('different-month')) {
+        // Previous month: comes before first day of current month OR 
+        // comes after a high day number (>= 28) and has low value (< 13)
+        if (index < firstDayOfCurrentMonth || 
+            (index > 0 && 
+             parseInt(days[index-1].textContent?.trim() || "0") >= 28 && 
+             dayNum < 13)) {
+          monthOffset = -1
+        } else {
+          // Next month
+          monthOffset = 1
+        }
+      }
+      
+      // Create a date for this day element
+      const dayDate = this.activeDate
+        .set({ day: dayNum })
+        .plus({ months: monthOffset })
+      const dayTs = dayDate.toMillis()
+      
+      // Check if this day is in the preview range
+      if (startTs < endTs) {
+        // Normal direction
+        if (dayTs > startTs && dayTs < endTs) {
+          day.classList.add('preview-in-range')
+        } else if (dayTs === endTs) {
+          day.classList.add('preview-end')
+        }
+      } else {
+        // Reverse direction (end is before start)
+        if (dayTs < startTs && dayTs > endTs) {
+          day.classList.add('preview-in-range')
+        } else if (dayTs === endTs) {
+          day.classList.add('preview-end')
+        }
+      }
+    })
+  }
+
+  private completeSelection(endDate: DateTime) {
+    if (!this.selectionStart) return
+    
+    // Determine which is start and which is end
+    if (endDate < this.selectionStart) {
+      this.startDate = endDate
+      this.endDate = this.selectionStart
+    } else {
+      this.startDate = this.selectionStart
+      this.endDate = endDate
+    }
+    
+    // Reset selection state
+    this.selectionStart = null
+    this.selectionPhase = 'first'
+    
+    // Update status
+    this.statusEl.textContent = "Select start date"
+    
+    // Apply immediately
+    this.onSelectCallback(this.startDate, this.endDate)
+    this.hide()
+  }
+
+  public show(referenceEl: HTMLElement = this.rangeInputSettingEl) {
+    if (this.isVisible) return
+  
+    this.isVisible = true
+    this.pickerContainer.addClass("visible")
+    this.positionPopup()
+    
+    // Reset selection state if no dates are already selected
+    // if (!this.startDate && !this.endDate) {
+    //   this.selectionStart = null
+    //   this.selectionPhase = 'first'
+    //   this.statusEl.textContent = this.singleDateMode ? "Select date" : "Select start date"
     // } else {
-    //   this.startDate = this.selectionStart
-    //   this.endDate = endDate
+    //   // If dates are already selected, use them
+    //   this.selectionStart = null
+    //   this.selectionPhase = 'first'
     // }
     
-    // // Reset selection state
-    // this.selectionStart = null
-    // this.selectionPhase = 'first'
-    
-    // // Update status
-    // this.statusEl.textContent = "Select start date"
-    
-    // // Apply immediately
-    // this.onSelectCallback(this.startDate, this.endDate)
     this.renderCalendar()
+    
+    // Remove existing handler if any
+    document.removeEventListener("mousedown", this.clickOutsideHandler)
+    
+    // Add click outside handler with a slight delay to ensure proper initialization
+    setTimeout(() => {
+      document.addEventListener("mousedown", this.clickOutsideHandler)
+    }, 50)
+  }
+
+  public hide() {
+    if (!this.isVisible) return
+    
+    this.isVisible = false
+    this.pickerContainer.removeClass("visible")
+    
+    // Remove click outside handler
+    document.removeEventListener("mousedown", this.clickOutsideHandler)
   }
 
   public destroy() {
-    // Remove event listeners
-    document.removeEventListener("mousedown", this.clickOutsideHandler)
-    
-    // Clean up input element listeners
-    this.startInputEl.removeEventListener("click", this.show.bind(this, this.startInputEl))
-    this.startInputEl.removeEventListener("focus", this.show.bind(this, this.startInputEl))
-    
-    if (!this.singleDateMode) {
-      this.endInputEl.removeEventListener("click", this.show.bind(this, this.endInputEl))
-      this.endInputEl.removeEventListener("focus", this.show.bind(this, this.endInputEl))
+    let datePickerStyles = document.getElementById("date-range-picker-styles")
+    if (datePickerStyles instanceof HTMLElement) {
+      datePickerStyles.remove()
     }
 
-//     var old_element = document.getElementById("btn");
-// var new_element = old_element.cloneNode(true);
-// old_element.parentNode.replaceChild(new_element, old_element);
-    
-    // Remove popup element
-    this.popupEl.remove()
+    this.dayEl?.remove()
+    this.yearInput?.remove()
+    this.monthSelect?.remove()
+    this.rangeInputSettingEl?.remove()
+    this.prevMonthBtn?.remove()
+    this.nextMonthBtn?.remove()
+
+    window.removeEventListener("resize", this.onResizeDebounced)
+    document.removeEventListener("mousedown", this.clickOutsideHandler)
   }
-}//
+}
+

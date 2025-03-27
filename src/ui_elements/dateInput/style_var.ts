@@ -1,5 +1,6 @@
 export let date_range_picker_style = `
 .date-range-picker {
+  position: fixed;
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
@@ -20,11 +21,16 @@ export let date_range_picker_style = `
   margin-bottom: 15px;
 }
 
-.month-year {
+.month-year-container {
   font-size: 1.1em;
   font-weight: bold;
   display: flex;
   align-items: center;
+  padding: 0.5em;
+}
+
+.dropdown-spacer{
+  width: 0.25em;
 }
 
 .month-year-dropdown {
@@ -35,7 +41,6 @@ export let date_range_picker_style = `
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9em;
-
 }
 
 .month-year-dropdown:focus {
@@ -70,6 +75,34 @@ export let date_range_picker_style = `
   color: var(--text-muted);
   font-size: 0.85em;
   text-transform: uppercase;
+}
+
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.toggle-inputs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.date-toggle {
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  flex: 1;
+  text-align: center;
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.date-toggle.active {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
 
 .day {
@@ -111,31 +144,90 @@ export let date_range_picker_style = `
   border: 1px solid var(--interactive-accent);
 }
 
-.button-container {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.toggle-inputs {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.date-toggle {
-  padding: 6px 12px;
-  cursor: pointer;
+.preview-in-range {
+  background-color: var(--interactive-accent-hover);
+  color: var(--text-on-accent);
   border-radius: 4px;
-  flex: 1;
-  text-align: center;
-  color: var(--text-normal);
-  border: 1px solid var(--background-modifier-border);
 }
 
-.date-toggle.active {
+.preview-end {
   background-color: var(--interactive-accent);
   color: var(--text-on-accent);
+  border-radius: 4px;
+}
+
+.preview-in-range.different-month {
+  color: var(--text-faint);
+  background-color: var(--background-modifier-hover);
+}
+
+.preview-in-range.today {
+  background-color: var(--background-modifier-hover);
+  border: 2px solid var(--interactive-accent);
+  color: var(--interactive-accent);
+  border-radius: 50%;
+}
+.day {
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  width: 20px;
+  margin: 2px auto;
+}
+
+.day:hover {
+ background-color: var(--background-modifier-hover);
+}
+.day.selected-start {
+ background-color: var(--interactive-accent);
+ color: var(--text-on-accent);
+}
+.day.selected-end {
+ background-color: var(--interactive-accent);
+ color: var(--text-on-accent);
+}
+.day.in-range {
+ background-color: var(--interactive-accent-hover);
+}
+.day.different-month {
+ color: var(--text-faint);
+}
+.day.today {
+ border: 1px solid var(--interactive-accent);
+}
+.preview-in-range {
+ background-color: var(--interactive-accent-hover);
+ color: var(--text-on-accent);
+ border-radius: 4px;
+}
+.preview-end {
+ background-color: var(--interactive-accent);
+ color: var(--text-on-accent);
+ border-radius: 4px;
+}
+
+/* New rules for combined classes */
+.day.different-month.preview-in-range {
+ color: var(--text-on-accent);
+ background-color: var(--interactive-accent-hover);
+}
+.day.different-month.preview-end {
+ color: var(--text-on-accent);
+ background-color: var(--interactive-accent);
+}
+.day.today.preview-in-range {
+ border: 1px solid var(--interactive-accent);
+ background-color: var(--interactive-accent-hover);
+ color: var(--text-on-accent);
+}
+.day.today.preview-end {
+ border: 1px solid var(--interactive-accent);
+ background-color: var(--interactive-accent);
+ color: var(--text-on-accent);
 }
 `
