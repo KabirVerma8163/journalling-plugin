@@ -18,6 +18,7 @@ import { end } from "@popperjs/core"
 import { DateTime } from "luxon"
 import { create } from "domain"
 import { start } from "repl"
+import { NewFileCreationStatus } from "../functional/vaultManipulation/vaultManipulationFeatures"
 
 export class JournalFeatureHandler implements IFeatureHandler {
   // #region Variable Declartion
@@ -28,7 +29,6 @@ export class JournalFeatureHandler implements IFeatureHandler {
   infoHandler: JournalInfoHandler
   settingsHandler: JournalSettingsHandler
   commands: Command[]
-  // #endregion
 
   constructor(serviceMngr: IServiceMngr) {
     this.name = serviceMngr.name
@@ -38,6 +38,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
     this.settingsHandler = serviceMngr.settingsHandler as JournalSettingsHandler
     this.commands = []
   }
+  // #endregion
 
   async createJournalNote(
     date: DateTime = firstSunday(DateTime.now()), 
@@ -46,6 +47,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
   ) { // Get the path to the folder
     let journalSettings = this.settingsHandler.journalSettings
     let vaultManipulationService = this.serviceMngr.servicesMngr.vaultManipulationService
+    let notificationService = this.serviceMngr.servicesMngr.notificationService
     
     let futureDates: DateTime[] = []
     let journalContent = await this.makeJournalContent(date, futureDates)
@@ -60,14 +62,22 @@ export class JournalFeatureHandler implements IFeatureHandler {
     })
 
     vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath, fileName, journalContent)
-    .then((file) => {
-      if (file === "SuccessfulNewCreation" || file === "SuccessfulReplacement") {
+    .then(({file, status}) => {
+      if (status == NewFileCreationStatus.SuccessfulNewCreation || status == NewFileCreationStatus.SuccessfulReplacement) {
         this.infoHandler.incrementCount()
         if (createDailes) {
           futureDates.forEach(futureDate => {
             serviceFeatureHandler.createDailyNote(futureDate.toJSDate())
           })
         }
+      } else if (status == NewFileCreationStatus.FileAlreadyExists) {
+        notificationService.featureHandler.createWarningNotice(
+          `File: ${fileName} already exists!`
+        )
+      } else {
+        notificationService.featureHandler.createErrorNotice(
+          `Something went wrong: ${status}!`
+        )
       }
     })
   }
@@ -75,9 +85,8 @@ export class JournalFeatureHandler implements IFeatureHandler {
   // TODO give an option to choose between creating corresponding daily notes for your mass journal making or not. 
   async createOlderJournalNotes(startDate: DateTime, endDate: DateTime, createDailes: boolean) {
     // Create a journal note for each week in between
-    // The loop that goes through all the dates
     let currentDate = startDate
-    while (currentDate <= endDate) {
+    while (currentDate <= endDate) { // The loop that goes through all the dates
       this.createJournalNote(currentDate, false, createDailes = createDailes)
       currentDate = currentDate.plus({ days: 7 })
     }

@@ -31,21 +31,26 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
     filename: string,
     templateContents: string = "",
     replace: boolean = this.settingsHandler.vaultManipulationSettings.replaceFilesOn
-  ) {
+  ): Promise<{
+    file: TFile | null,
+    status: NewFileCreationStatus
+  }>{
     let vault = this.plugin.app.vault
 
     // Create the folder from the folder path if it doesn't exist 
-    await vault.adapter.exists(folderPath).then((exists) => {
-      if (!exists) {
-        vault.createFolder(folderPath)
-          .then((folder) => { })
-          .catch((err) => {
-            this.plugin.basicErrorNotice(`Error in file creation:${filename} check consolve for details.`)
-            console.log(`Error in folder existence: ${err}`)
-            return
-          })
+    const folderExists = await vault.adapter.exists(folderPath)
+    if (!folderExists) {
+      try {
+        await vault.createFolder(folderPath)
+      } catch (err) {
+        this.plugin.basicErrorNotice(`Error in file creation: ${filename}. Check console for details.`)
+        this.plugin.debugger.log(`Error in folder creation: ${err}`)
+        return {
+          file: null,
+          status: NewFileCreationStatus.FailedToCreateFolder
+        }
       }
-    })
+    }  
 
     // #region Path sanity checks
     if (folderPath.endsWith("/") == false) {
@@ -56,68 +61,47 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
     }
     // #endregion
 
-    // Steps for if the file already exists 
+    // Check if file already exists
     let file = vault.getAbstractFileByPath(`${folderPath}${filename}`)
-    if (file != null && file instanceof TFile) {
+    if (file instanceof TFile) {
       if (!replace) {
-        return new Promise ((resolve, reject) => { // File exists and leave it as is
-          if (file != null && file instanceof TFile) {
-            resolve({
-              file: file, 
-              status: NewFileCreationStatus.FileAlreadyExists
-            })
-          }
-          reject({
-            error: `File: ${filename} already exists in ${folderPath}`,
-            status: NewFileCreationStatus.FailedToCreateFile
-          })
-        })
-      } else { // File Replacement 
-        this.plugin.basicWarningNotice(`Replacing File: ${filename} already exists in ${folderPath}`)
-        return vault.modify(file, templateContents)
-        .then(() => {
-          return new Promise((resolve, reject) => {
-            if (file != null && file instanceof TFile) {
-              resolve(NewFileCreationStatus.SuccessfulReplacement)
-            } else {
-              reject({
-                file: file,
-                error: "File exists but there was a type error in modification.",
-                status: NewFileCreationStatus.UnsuccessfulReplacement
-              })
-            }
-          })
-        })
-        .catch(() => {
-          return new Promise((resolve, reject) => {
-            reject({
-              file: file,
-              error: "File Exists but couldn't be modified.",
-              status: NewFileCreationStatus.UnsuccessfulReplacement
-            })
-          })
-        })
+        return {
+          file: file,
+          status: NewFileCreationStatus.FileAlreadyExists
+        }
+      }
+
+      try { // Replace file contents
+        await vault.modify(file, templateContents)
+        return {
+          file: file,
+          status: NewFileCreationStatus.SuccessfulReplacement
+        }
+      } catch {
+        return {
+          file: file,
+          status: NewFileCreationStatus.FailedToReplaceFile
+        }
       }
     }
 
-    // Create the file if it doesn't exist
-    return new Promise ((resolve, reject) => {
-      vault.create(folderPath + filename, templateContents)
-        .then((file) => { // Successful creation
-          if (file != null && file instanceof TFile) {
-            resolve({
-              file: file, 
-              status: NewFileCreationStatus.SuccessfulNewCreation
-            })
-          }
-        })
-        .catch((error) => { // UnSuccessful creation
-          reject({
-            error: error,
-            status: NewFileCreationStatus.FailedToCreateFile
-          })
-        })
-    })
+    // Create new file
+    try {
+      file = await vault.create(`${folderPath}${filename}`, templateContents)
+      if (file instanceof  TFile) {
+        return {
+          file: file,
+          status: NewFileCreationStatus.SuccessfulNewCreation
+        }
+      }
+      return {
+        file: null,
+        status: NewFileCreationStatus.FailedToCreateFile
+      }
+    } catch (err) {
+      console.error(`Error creating file: ${err}`)
+      throw new Error(`Failed to create file: ${filename}`)
+    }
   }
 
   // There is no point in adding more customizability to how to open the file 
@@ -146,7 +130,10 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
     filename: string,
     templateContents: string = "",
     replace: boolean = this.settingsHandler.vaultManipulationSettings.replaceFilesOn
-  ) {
+  ): Promise<{
+    file: TFile | null,
+    status: NewFileCreationStatus
+  }>{
     if (!filename.endsWith(".md")) { filename = filename + ".md" }
     return this.createNewFile(folderPath, filename, templateContents, replace)
   }
@@ -164,7 +151,8 @@ export class VaultManipulationFeatureHandler implements IFeatureHandler {
 export enum NewFileCreationStatus {
   SuccessfulNewCreation = "SuccessfulNewCreation",
   SuccessfulReplacement = "SuccessfulReplacement",
-  UnsuccessfulReplacement = "UnsuccessfulReplacement",
+  FailedToReplaceFile = "FailedToReplaceFile",
   FileAlreadyExists = "FileAlreadyExists",
   FailedToCreateFile = "FailedToCreateFile",
+  FailedToCreateFolder = "FailedToCreateFolder"
 }

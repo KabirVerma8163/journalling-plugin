@@ -37,13 +37,13 @@ export class InfoMngr{
     await this.dataMngr.setInfo("notification", value)
   }
 
-  getReminderInfo() : TReminderInfo{
-    return  this.dataMngr.getInfo("reminder")
-  }
+  // getReminderInfo() : TReminderInfo{
+  //   return  this.dataMngr.getInfo("reminder")
+  // }
 
-  async setReminderInfo(value: TReminderInfo){
-    await this.dataMngr.setInfo("reminder", value)
-  }
+  // async setReminderInfo(value: TReminderInfo){
+  //   await this.dataMngr.setInfo("reminder", value)
+  // }
 
   getVaultManipulationInfo() : TVaultManipulationInfo{
     return this.dataMngr.getInfo("vaultManipulation")

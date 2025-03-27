@@ -135,8 +135,6 @@ export class NotificationFeatureHandler implements IFeatureHandler {
     }
   }
 
-
-
   createErrorNotice(errMsg: string, length?: number) {
     let errorNotice: Notice
     if (length = undefined) {
@@ -144,7 +142,7 @@ export class NotificationFeatureHandler implements IFeatureHandler {
     } else {
       errorNotice = new Notice(errMsg, length)
     }
-    errorNotice.noticeEl.style.backgroundColor = '#ff5c5c'
+    errorNotice.messageEl.style.backgroundColor = '#ff5c5c'
   }
 
   createWarningNotice(errMsg: string, length?: number) {
@@ -154,7 +152,7 @@ export class NotificationFeatureHandler implements IFeatureHandler {
     } else {
       warningNotice = new Notice(errMsg, length)
     }
-    warningNotice.noticeEl.style.backgroundColor = '#fc7d36'
+    warningNotice.messageEl.style.backgroundColor = '#fc7d36'
   }
 
   async initialize() {
