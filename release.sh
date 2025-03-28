@@ -16,15 +16,24 @@ if [ ! -f "$MANIFEST_FILE" ]; then
     exit 1
 fi
 
-# Update version in manifest.json
-# This uses sed to replace the version line while preserving formatting
-sed -i "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" $MANIFEST_FILE
+# macOS specific sed command
+sed -i '' "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" $MANIFEST_FILE
 
-echo "Updated $MANIFEST_FILE to version $VERSION"
+# Verify the file was changed
+if grep -q "\"version\": \"$VERSION\"" $MANIFEST_FILE; then
+    echo "Successfully updated $MANIFEST_FILE to version $VERSION"
+else
+    echo "Error: Failed to update version in $MANIFEST_FILE"
+    exit 1
+fi
+
+# Stage the changes to manifest.json
+git add $MANIFEST_FILE
+
+# Commit the changes with an "Updated manifest" message
+git commit -m "Updated manifest to version $VERSION"
 
 # Create git tag and push to origin
-git add $MANIFEST_FILE
-git commit -m "Bump version to $VERSION"
 git tag -a $VERSION -m "Release version $VERSION"
 git push origin $VERSION
 git push origin main
