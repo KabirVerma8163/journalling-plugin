@@ -5,7 +5,7 @@ import JournallingPlugin from "src/main"
 export class DebuggingSupport {
   plugin: JournallingPlugin
   debugMode: boolean
-  ignoredTerms: String[]
+  ignoredTerms: string[]
 
   constructor(plugin: JournallingPlugin){
     this.plugin = plugin

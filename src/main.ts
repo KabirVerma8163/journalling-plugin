@@ -1,10 +1,8 @@
 import { App, Plugin, PluginManifest} from 'obsidian'
 import { ServicesManager } from 'src/services/servicesMngr'
-import { DebuggingSupport } from 'src/utils/debuggingSupport'
-import { nanoid } from 'nanoid'
 import { JournalService } from './services/journalling/journal'
 import { DateTime } from 'luxon'
-import { auto } from '@popperjs/core'
+import { DebuggingSupport } from './utils/debuggingSupport'
 
 
 export default class JournallingPlugin extends Plugin {
@@ -30,7 +28,7 @@ export default class JournallingPlugin extends Plugin {
 		this.isTesting = true
 		this.isTesting = false
 
-		this.debugger = new DebuggingSupport(this)
+		// this.debugger = new DebuggingSupport(this)
 		if (this.isTesting) {
 			console.clear()
 			console.log('Journalling Plugin Loaded for testing')

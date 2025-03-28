@@ -252,7 +252,7 @@ function createTimelyNoteSetting(name: string, settingHandler: PeriodicSettingsH
   //     settingHandler.setPeriodicSettings()
   //   })
 
-  })
+  // })
 
   // Note reminder
   // const reminderSettingConfig: ReminderSettingConfig = {
