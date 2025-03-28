@@ -2,15 +2,12 @@
 
 # Check if both version number and commit message are provided
 if [ $# -ne 1 ]; then
-    # echo "Usage: $0 <version_number> <commit_message>"
-    # echo "Example: $0 1.1.5 \"Add new journaling features\""
     echo "Usage: $0 <version_number>"
     echo "Example: $0 1.1.5"
     exit 1
 fi
 
 VERSION=$1
-# COMMIT_MESSAGE=$2
 MANIFEST_FILE="manifest.json"
 
 # Check if manifest.json exists
@@ -33,9 +30,6 @@ fi
 # Stage the changes to manifest.json
 git add $MANIFEST_FILE
 git commit -m "Updated manifest file to $VERSION"
-
-# # Commit the changes with the user-provided commit message
-# git commit -m "$COMMIT_MESSAGE"
 
 # Create git tag after the commit
 git tag -a $VERSION -m "Release version $VERSION"
