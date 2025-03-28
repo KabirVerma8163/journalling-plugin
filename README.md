@@ -4,6 +4,9 @@
 This plugin is still in its beta stage, all its features are being developed and need working on. 
 To download and use this plugin the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) must be added to your vault.
 
+Once the plugin has been enabled, you have access to commands to create the current Journal and Daily notes, the settings are very detailed to avoid confusions, but please let me know if you have any questions.
+There is a caldenar-minus sign in the left bar, to help you build the backlog of journals.
+
 ## Features
 
 ### 1. Journalling
