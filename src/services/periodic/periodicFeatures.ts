@@ -111,6 +111,7 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     let links = `#### [[${yesterFileName}|<--Yesterday's Note]] ++ [[${tomorrowFileName}|Tomorrow's Note-->]]\n`
 
     let templateFile = vault.getAbstractFileByPath(dailySettings.templatePath)
+    this.plugin.debugger.log("Tempalte File Path")
     if (templateFile instanceof TFile) {
       let templateString = await vault.read(templateFile)
     
@@ -133,6 +134,8 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
           dailyNoteContent = dailyNoteContent.replace(/{{journal_link}}/g, weeklyJournalPath)
         }
       }
+    } else {
+      this.plugin.debugger.error("I couldn't find the template file.")
     }
 
     return dailyNoteContent + links

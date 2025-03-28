@@ -235,6 +235,7 @@ function createTimelyNoteSetting(name: string, settingHandler: PeriodicSettingsH
       })
   })
   
+  // #region future stuff
   // // Home Note Id
   // new Setting(collasibleObj.collapsibleEl)
   // .setName('Home Note Id')
@@ -275,7 +276,7 @@ function createTimelyNoteSetting(name: string, settingHandler: PeriodicSettingsH
   //   }
   // }
   // new ReminderSetting(reminderSettingConfig, settingHandler.settingsMngr)
-
+  // #endregion
 
   collasibleObj.containerEl.style.width = "92.5%"
   collasibleObj.containerEl.style.marginLeft = "2.5%"

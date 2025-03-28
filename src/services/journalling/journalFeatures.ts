@@ -224,7 +224,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
       let futureDate = startOfWeek.plus({ days: i })
       let formattedFutureDate = formatDate(dailyNamingFormat, futureDate.toJSDate())
   
-      dailyNoteLinks += `## [[${formattedFutureDate}]]\n  > Your entry\n\n`
+      dailyNoteLinks += `## [[${formattedFutureDate}]]\n  > Your entry\n`
       futureDates.push(futureDate)
     }
     journalContent = journalContent.replace("{links}", dailyNoteLinks)
