@@ -111,13 +111,12 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     let links = `#### [[${yesterFileName}|<--Yesterday's Note]] ++ [[${tomorrowFileName}|Tomorrow's Note-->]]\n`
 
     let templateFile = vault.getAbstractFileByPath(dailySettings.templatePath)
-    this.plugin.debugger.log(`Tempalte File Path: ${dailySettings.templatePath}`)
     if (templateFile instanceof TFile) {
       let templateString = await vault.read(templateFile)
     
       // Extract front matter using getFrontMatterInfo
       const frontMatterInfo = getFrontMatterInfo(templateString)
-      dailyNoteContent = frontMatterInfo.exists ? frontMatterInfo.frontmatter : ""
+      dailyNoteContent = `---\n` + frontMatterInfo.exists ? frontMatterInfo.frontmatter : "" + `---\n`
       templateString = templateString.substring(frontMatterInfo.contentStart)
       dailyNoteContent += links + templateString
     
@@ -135,7 +134,6 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
         }
       }
     } else {
-      this.plugin.debugger.error("I couldn't find the template file.")
       dailyNoteContent = ""
     }
 

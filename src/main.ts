@@ -26,7 +26,7 @@ export default class JournallingPlugin extends Plugin {
 		this.name = manifest.name
 		
 		this.isTesting = true
-		// this.isTesting = false
+		this.isTesting = false
 
 		this.debugger = new DebuggingSupport(this)
 		if (this.isTesting) {
