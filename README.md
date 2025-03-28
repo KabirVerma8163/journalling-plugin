@@ -4,8 +4,7 @@
 This plugin is still in its beta stage, all its features are being developed and need working on. 
 To download and use this plugin the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) must be added to your vault.
 
-## Services Briefing
-Currently the 4 services this plugin offers are: 
+## Features
 
 ### 1. Journalling
 > This is currently the core of this plugin and will always be the main theme. I wanted a plugin that automated journal creation process and sent regular reminders for when certain notes had to be created/filled in.
