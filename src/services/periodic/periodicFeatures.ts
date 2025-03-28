@@ -100,7 +100,7 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     let folderPath = this.getDailyNotePath(date)
     // let filePath = folderPath + `/${formatDate(dailySettings.namingFormat, date.toJSDate())}.md`
 
-    let dailyNoteContent = ""
+    let dailyNoteContent: string
 
     let yesterDate = date.minus({ days: 1 })
     let yesterFileName = formatDate(dailySettings.namingFormat, yesterDate.toJSDate())
@@ -117,7 +117,7 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     
       // Extract front matter using getFrontMatterInfo
       const frontMatterInfo = getFrontMatterInfo(templateString)
-      let dailyNoteContent = frontMatterInfo.exists ? frontMatterInfo.frontmatter : ""
+      dailyNoteContent = frontMatterInfo.exists ? frontMatterInfo.frontmatter : ""
       templateString = templateString.substring(frontMatterInfo.contentStart)
       dailyNoteContent += links + templateString
     
@@ -136,6 +136,7 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
       }
     } else {
       this.plugin.debugger.error("I couldn't find the template file.")
+      dailyNoteContent = ""
     }
 
     return dailyNoteContent + links
