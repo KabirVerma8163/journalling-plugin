@@ -28,7 +28,7 @@ export default class JournallingPlugin extends Plugin {
 		this.isTesting = true
 		this.isTesting = false
 
-		// this.debugger = new DebuggingSupport(this)
+		this.debugger = new DebuggingSupport(this)
 		if (this.isTesting) {
 			console.clear()
 			console.log('Journalling Plugin Loaded for testing')
