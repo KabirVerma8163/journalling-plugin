@@ -75,7 +75,6 @@ export class JournalFeatureHandler implements IFeatureHandler {
     })
   }
 
-
   async createJournalNote(
     date: DateTime = firstSunday(DateTime.now()), 
     fromCommand: boolean = false,
@@ -90,7 +89,8 @@ export class JournalFeatureHandler implements IFeatureHandler {
     if (journalContent == null) return
 
     let folderPath = this.getJournalFolderPath(date)
-    let fileName = `/${formatDate(journalSettings.namingFormat, date.toJSDate())}.md`
+    const sundayOfWeek = date.startOf('week').minus({ days: 1 })
+    let fileName = `/${formatDate(journalSettings.namingFormat, sundayOfWeek.toJSDate())}.md`
 
     let serviceFeatureHandler: PeriodicFeaturesHandler
     this.serviceMngr.servicesMngr.serviceMngrs.forEach(service => {
@@ -212,8 +212,10 @@ export class JournalFeatureHandler implements IFeatureHandler {
     }
   
     if (!date) return null
-    let previousDate = date.minus({ days: 7 }).toJSDate()
-    let nextDate = date.plus({ days: 7 }).toJSDate()
+    // Adjust the date to the Sunday of its week (start of the week)
+    const sundayOfWeek = date.startOf('week').minus({ days: 1 })
+    let previousDate = sundayOfWeek.minus({ days: 7 }).toJSDate()
+    let nextDate = sundayOfWeek.plus({ days: 7 }).toJSDate()
   
     let previousJournalName = formatDate(journalSettings.namingFormat, previousDate)
     let nextJournalName = formatDate(journalSettings.namingFormat, nextDate)
@@ -239,7 +241,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
     // Daily note links
     let dailyNoteLinks = ""
     for (let i = 0; i < 7; i++) {
-      let startOfWeek = date.startOf('week')
+      let startOfWeek = date.startOf('week').minus({ days: 1 })
       let futureDate = startOfWeek.plus({ days: i })
       let formattedFutureDate = formatDate(dailyNamingFormat, futureDate.toJSDate())
   
