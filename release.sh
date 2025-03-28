@@ -38,4 +38,4 @@ git tag -a $VERSION -m "Release version $VERSION"
 git push origin main
 git push origin $VERSION
 
-echo "Version $VERSION tagged and pushed successfully with commit message: \"$COMMIT_MESSAGE\""
+echo "Version $VERSION tagged and pushed successfully"
