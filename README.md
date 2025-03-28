@@ -34,5 +34,6 @@ There is some code in here that's commented out, its the code for future feature
 1. Adding more robust notifications
 2. Reminders
 
+# Dev notes
 The design is supposed to be modular, new setting objects, handlers can all be used independently and different services can be turned on and off with the commenting out of a single line which makes testing and debugging a lot easier. If you find any of the code here useful for your own plugin, feel free to use it and post questions here if you have any. I would also like to thank Liam Cain's periodic notes for his code on making suggesters, which I modified to fit my own use case. 
-
+All the bloat is gone, so the plugin isn't a burden on resources anymore
