@@ -111,7 +111,7 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     let links = `#### [[${yesterFileName}|<--Yesterday's Note]] ++ [[${tomorrowFileName}|Tomorrow's Note-->]]\n`
 
     let templateFile = vault.getAbstractFileByPath(dailySettings.templatePath)
-    this.plugin.debugger.log("Tempalte File Path")
+    this.plugin.debugger.log(`Tempalte File Path: ${dailySettings.templatePath}`)
     if (templateFile instanceof TFile) {
       let templateString = await vault.read(templateFile)
     
