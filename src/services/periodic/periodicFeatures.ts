@@ -8,9 +8,9 @@ import { PeriodicSettingsHandler } from "src/services/periodic/periodicSettings"
 import { firstSunday, formatDate, setReminderTime } from "src/utils/independentUtils"
 import { DateTime } from "luxon"
 import { JournalService } from "../journalling/journal"
+import { NewFileCreationStatus } from "../functional/vaultManipulation/vaultManipulationFeatures"
 
 export class PeriodicFeaturesHandler implements IFeatureHandler {
-  // #region Constructor
   name: string
   description: string
   serviceMngr: PeriodicService
@@ -28,7 +28,6 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     this.plugin = serviceMngr.plugin
     this.commands = []
   } 
-  // #endregion
 
   async initialize() {
     this.plugin.debugger.log("Initializing PeriodicFeatures")
@@ -52,10 +51,9 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
   }
 
   async createDailyNote(date: DateTime = DateTime.now(), fromCommand: boolean = false) {
-    // moment.updateLocale('en', { week: { dow: 0 }})// Sunday is the first day of the week
-
     let dailySettings = this.settingsHandler.periodicSettings.daily
     let vaultManipulationService = this.serviceMngr.servicesMngr.vaultManipulationService
+    let notificationService = this.serviceMngr.servicesMngr.notificationService
 
     const folderPath = this.getDailyNotePath(date)
     const dailyNoteContent = await this.makeDailyNoteContent(date)
@@ -66,8 +64,25 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
       formatDate(dailySettings.namingFormat, date.toJSDate()),
       dailyNoteContent
     )
-    .then(() => {
-      // this.infoHandler.incrementDailyCount()
+    .then(({file, status}) => {
+      if (status == NewFileCreationStatus.SuccessfulNewCreation 
+        || status == NewFileCreationStatus.SuccessfulReplacement
+        || status == NewFileCreationStatus.FileAlreadyExists
+      ) {
+        if (status == NewFileCreationStatus.FileAlreadyExists) {
+          notificationService.featureHandler.createWarningNotice( `File: ${file?.name} already exists!` )
+        }
+        else{
+            this.infoHandler.incrementDailyCount()
+          }
+        if (fromCommand && file){
+          vaultManipulationService.featureHandler.openFile(file.path)
+        }
+      } else {
+        notificationService.featureHandler.createErrorNotice(
+          `Something went wrong: ${status}!`
+        )
+      }
     })
   }
 

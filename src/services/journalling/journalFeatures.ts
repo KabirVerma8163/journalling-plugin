@@ -32,6 +32,50 @@ export class JournalFeatureHandler implements IFeatureHandler {
   }
   // #endregion
 
+  async initialize() {
+    this.plugin.debugger.log("Initializing JournalFeatureHandler")
+    this.infoHandler = this.serviceMngr.infoHandler as JournalInfoHandler
+
+    // TODO Activate this later
+    // this.handleAutoCreateJournalNote()
+
+    this.plugin.addRibbonIcon(
+      "calendar-minus",
+      "Add older journalling and linked notes",
+      () => {
+        this.runCreateOlderJournals()
+      })
+
+    this.plugin.addCommand({
+      id: "create-journal-note",
+      name: "Create Journal Note",
+      hotkeys: [
+        {
+          modifiers: ["Mod"],
+          key: "j",
+        },
+      ],
+      callback: () => {
+        this.createJournalNote(undefined, true)
+      }
+    })
+
+    this.plugin.addCommand({
+      id: "create-older-journal-note",
+      name: "Create Older Journal Notes",
+      hotkeys: [
+        {
+          modifiers: ["Ctrl"],
+          key: "j",
+        },
+      ],
+      callback: () => {
+        this.runCreateOlderJournals()
+      }
+    })
+  }
+
+
   async createJournalNote(
     date: DateTime = firstSunday(DateTime.now()), 
     fromCommand: boolean = false,
@@ -103,39 +147,29 @@ export class JournalFeatureHandler implements IFeatureHandler {
 
   }
 
-  async initialize() {
-    this.plugin.debugger.log("Initializing JournalFeatureHandler")
-    this.infoHandler = this.serviceMngr.infoHandler as JournalInfoHandler
-
-    // TODO Activate this later
-    // this.handleAutoCreateJournalNote()
-
-    this.plugin.addRibbonIcon(
-      "calendar-minus",
-      "Add older journalling and linked notes",
-      () => {
-        let createDailies: boolean = true
-        new DateRangeModal(
-          this.plugin.app , 
-          (startDate, endDate) => {
-          if (startDate instanceof DateTime && endDate instanceof DateTime) {
-            this.plugin.debugger.log(
-              `'Date range selected:' ${startDate.toFormat('yyyy-MM-dd')} to ${endDate.toFormat('yyyy-MM-dd')} \nboolean: ${createDailies}`
-            )
-            this.createOlderJournalNotes(startDate, endDate, createDailies)
-          }
-        },
-        (contentEl) => {
-          // Create single input for date range display
-          const rangeInputSetting = new Setting(contentEl)
-            .setName('Create Dailies')
-            .setDesc('Do you want to make dailies for each journal note created')
-            .addToggle((toggle) => {
-              toggle.setValue(createDailies)
-              toggle.onChange(() => {
-                createDailies = toggle.getValue()
-              })
+  private runCreateOlderJournals(){
+    let createDailies: boolean = true
+    new DateRangeModal(
+      this.plugin.app,
+      (startDate, endDate) => {
+        if (startDate instanceof DateTime && endDate instanceof DateTime) {
+          this.plugin.debugger.log(
+            `'Date range selected:' ${startDate.toFormat('yyyy-MM-dd')} to ${endDate.toFormat('yyyy-MM-dd')} \nboolean: ${createDailies}`
+          )
+          this.createOlderJournalNotes(startDate, endDate, createDailies)
+        }
+      },
+      (contentEl) => {
+        // Create single input for date range display
+        const rangeInputSetting = new Setting(contentEl)
+          .setName('Create Dailies')
+          .setDesc('Do you want to make dailies for each journal note created')
+          .addToggle((toggle) => {
+            toggle.setValue(createDailies)
+            toggle.onChange(() => {
+              createDailies = toggle.getValue()
             })
+          })
         },
         {
           openPickerByDefault: true,
@@ -143,21 +177,6 @@ export class JournalFeatureHandler implements IFeatureHandler {
           descText: "Select dates for which journal notes should be created for"
         }
       ).open()
-      })
-
-    this.plugin.addCommand({
-      id: "create-journal-note",
-      name: "Create Journal Note",
-      hotkeys: [
-        {
-          modifiers: ["Ctrl"],
-          key: "j",
-        },
-      ],
-      callback: () => {
-        this.createJournalNote(undefined, true)
-      }
-    })
   }
 
   private getJournalFolderPath(date?: DateTime): string {
@@ -236,11 +255,6 @@ export class JournalFeatureHandler implements IFeatureHandler {
     return journalContent
   }
 
-  /**
-   * Updates the home note with a link to a specific journal section on the same line as the journal ID
-   * @param date The date to use for generating the journal name
-   * @param dailyNoteName The name of the daily note to link to within the journal
-   */
   async updateHomeNoteWithJournalLink(date: DateTime, dailyNoteName: string): Promise<void> {
     // Get the settings we need
     const vaultManipulationService = this.serviceMngr.servicesMngr.vaultManipulationService
@@ -287,7 +301,6 @@ export class JournalFeatureHandler implements IFeatureHandler {
     const updatedContent = lines.join('\n')
     await vault.modify(homeNote, updatedContent)
   }
-  
 
   async cleanup() {
     this.plugin.debugger.log("Not yet implemented JournalFeatureHandler.cleanup()")
