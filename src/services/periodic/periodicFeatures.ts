@@ -100,7 +100,7 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     let folderPath = this.getDailyNotePath(date)
     // let filePath = folderPath + `/${formatDate(dailySettings.namingFormat, date.toJSDate())}.md`
 
-    let dailyNoteContent: string
+    let dailyNoteContent = ""
 
     let yesterDate = date.minus({ days: 1 })
     let yesterFileName = formatDate(dailySettings.namingFormat, yesterDate.toJSDate())
@@ -116,8 +116,10 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     
       // Extract front matter using getFrontMatterInfo
       const frontMatterInfo = getFrontMatterInfo(templateString)
-      dailyNoteContent = `---\n` + frontMatterInfo.exists ? frontMatterInfo.frontmatter : "" + `---\n`
-      templateString = templateString.substring(frontMatterInfo.contentStart)
+      if (frontMatterInfo.exists) {
+        dailyNoteContent = `---\n` + frontMatterInfo.frontmatter + `---\n`
+        templateString = templateString.substring(frontMatterInfo.contentStart)
+      }
       dailyNoteContent += links + templateString
     
       // Replace {{journal_link}} if it exists
@@ -133,8 +135,6 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
           dailyNoteContent = dailyNoteContent.replace(/{{journal_link}}/g, weeklyJournalPath)
         }
       }
-    } else {
-      dailyNoteContent = ""
     }
 
     return dailyNoteContent + links
