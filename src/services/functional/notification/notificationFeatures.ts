@@ -143,6 +143,7 @@ export class NotificationFeatureHandler implements IFeatureHandler {
       errorNotice = new Notice(errMsg, length)
     }
     errorNotice.messageEl.style.backgroundColor = '#ff5c5c'
+    errorNotice.messageEl.style.padding = '5px'
   }
 
   createWarningNotice(errMsg: string, length?: number) {
@@ -153,6 +154,7 @@ export class NotificationFeatureHandler implements IFeatureHandler {
       warningNotice = new Notice(errMsg, length)
     }
     warningNotice.messageEl.style.backgroundColor = '#fc7d36'
+    warningNotice.messageEl.style.padding = '5px'
   }
 
   async initialize() {

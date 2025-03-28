@@ -97,36 +97,26 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     let dailySettings = this.settingsHandler.periodicSettings.daily
     let vault = this.plugin.app.vault
 
-    let folderPath = this.getDailyNotePath(date)
-    // let filePath = folderPath + `/${formatDate(dailySettings.namingFormat, date.toJSDate())}.md`
-
-    let dailyNoteContent = ""
-
-    let yesterDate = date.minus({ days: 1 })
-    let yesterFileName = formatDate(dailySettings.namingFormat, yesterDate.toJSDate())
-
-    let tomorrowDate = date.plus({ days: 1 })
-    let tomorrowFileName = formatDate(dailySettings.namingFormat, tomorrowDate.toJSDate())
-
+    let yesterFileName = formatDate(dailySettings.namingFormat, date.minus({ days: 1 }).toJSDate())
+    let tomorrowFileName = formatDate(dailySettings.namingFormat, date.plus({ days: 1 }).toJSDate())
     let links = `#### [[${yesterFileName}|<--Yesterday's Note]] ++ [[${tomorrowFileName}|Tomorrow's Note-->]]\n`
 
     let templateFile = vault.getAbstractFileByPath(dailySettings.templatePath)
     if (templateFile instanceof TFile) {
       let templateString = await vault.read(templateFile)
     
+      let dailyNoteContent = ""
       // Extract front matter using getFrontMatterInfo
       const frontMatterInfo = getFrontMatterInfo(templateString)
       if (frontMatterInfo.exists) {
         dailyNoteContent = `---\n` + frontMatterInfo.frontmatter + `---\n`
+        templateString = templateString.substring(frontMatterInfo.contentStart)
       }
-      templateString = templateString.substring(frontMatterInfo.contentStart)
       dailyNoteContent += links + templateString
     
       // Replace {{journal_link}} if it exists
       if (dailyNoteContent.includes("{{journal_link}}")) {
-        const journalService = this.serviceMngr.servicesMngr.serviceMngrs.find(
-          (service) => service.name === "Journal"
-        )
+        const journalService = this.serviceMngr.servicesMngr.serviceMngrs.find( (service) => service.name === "Journal" )
     
         if (journalService instanceof JournalService) {
           const journalNamingFormat = this.serviceMngr.servicesMngr.settingsMngr.getJournalSettings().namingFormat
@@ -135,9 +125,11 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
           dailyNoteContent = dailyNoteContent.replace(/{{journal_link}}/g, weeklyJournalPath)
         }
       }
-    }
 
-    return dailyNoteContent + links
+      return dailyNoteContent + links
+    } 
+
+    return links
   }
 
   async cleanup() {
