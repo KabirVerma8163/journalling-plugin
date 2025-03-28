@@ -1,6 +1,7 @@
-import { Setting } from "obsidian"
+import { App, Setting } from "obsidian"
 import { config } from "process"
 import { SettingsMngr } from "src/dataManagement/settings"
+import { FileSuggest } from "src/ui_elements/suggesters/fileFolderSuggests"
 
 interface IExtendedSetting {
   settingsMngr: SettingsMngr
@@ -201,6 +202,52 @@ export class TimelySubDirSetting implements IExtendedSetting {
     }
 
     this.interactiveTextSetting = new InteractiveTextSetting(settingsMngr, interactiveTextConfig)
+  }
+}
+
+export class SimpleToggleSetting {
+  toggleSetting: Setting
+  dependentSetting?: Setting
+  settingsMngr: SettingsMngr
+
+  constructor(
+    app: App,
+    container: HTMLElement,
+    settingName: string,
+    description: string,
+    getToggleValue: () => boolean,
+    setToggleValue: (value: boolean) => Promise<void>,
+    getDependentValue?: () => string,
+    setDependentValue?: (value: string) => void
+  ) {
+    // Create the toggle setting
+    this.toggleSetting = new Setting(container)
+      .setName(settingName)
+      .setDesc(description)
+      .addToggle(toggle => {
+        toggle.setValue(getToggleValue())
+        toggle.onChange(async (value) => {
+          await setToggleValue(value)
+          if (this.dependentSetting) {
+            this.dependentSetting.settingEl.style.display = value ? "block" : "none"
+          }
+        })
+      })
+
+    // Create the dependent setting if needed
+    if (getDependentValue && setDependentValue) {
+      this.dependentSetting = new Setting(container)
+        .setName(`${settingName} Value`)
+        .addSearch((search) => {
+          new FileSuggest(app, search.inputEl)
+          search.setPlaceholder("Example: folder1/folder2")
+            .setValue(getDependentValue())
+            .onChange(setDependentValue)
+        })
+      
+      // Hide it initially if the toggle is off
+      this.dependentSetting.settingEl.style.display = getToggleValue() ? "block" : "none"
+    }
   }
 }
 

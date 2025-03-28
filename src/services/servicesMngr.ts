@@ -6,7 +6,6 @@ import JournallingPlugin from "src/main"
 import { NotificationService } from "src/services/functional/notification/notifications"
 import { IFeatureHandler } from "src/services/features"
 import { ISettingsHandler, SettingsMngr } from "src/dataManagement/settings"
-import { ReminderService } from "src/services/functional/reminder/reminders"
 import { JournalService } from "src/services/journalling/journal"
 import { PeriodicService } from "src/services/periodic/periodic"
 import { Vault } from "obsidian"
@@ -33,7 +32,7 @@ export class ServicesManager {
   infoMngr: InfoMngr
   settingsMngr: SettingsMngr
   notificationService: NotificationService
-  reminderService: ReminderService
+  // reminderService: ReminderService
   vaultManipulationService: VaultManipulationService
 
   constructor(plugin: JournallingPlugin){
@@ -50,8 +49,8 @@ export class ServicesManager {
 
     this.notificationService = new NotificationService(this)
     this.serviceMngrs.push(this.notificationService)
-    this.reminderService = new ReminderService(this)
-    this.serviceMngrs.push(this.reminderService)
+    // this.reminderService = new ReminderService(this)
+    // this.serviceMngrs.push(this.reminderService)
     this.vaultManipulationService = new VaultManipulationService(this)
     this.serviceMngrs.push(this.vaultManipulationService)
   } 

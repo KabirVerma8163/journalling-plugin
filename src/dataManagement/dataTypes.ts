@@ -1,5 +1,6 @@
+import { DateTime } from "luxon"
 import { PluginScheduledNotification } from "src/services/functional/notification/notificationInfo"
-import { PluginReminder } from "src/services/functional/reminder/reminderInfo"
+// import { PluginReminder } from "src/services/functional/reminder/reminderInfo"
 
 export type TNotificationInfo = {
   count: number
@@ -16,7 +17,7 @@ export type TReminderInfo = {
   snoozedShowing: boolean
   doneShowing: boolean
   count: number
-  reminders: PluginReminder[]
+  // reminders: PluginReminder[]
 }
 export const DEFAULT_REMINDERS_INFO: TReminderInfo = {
   lateShowing: true,
@@ -24,7 +25,7 @@ export const DEFAULT_REMINDERS_INFO: TReminderInfo = {
   snoozedShowing: true,
   doneShowing: true,
   count: 0,
-  reminders: []
+  // reminders: []
 }
 
 export type TVaultManipulationInfo = {}
@@ -33,19 +34,23 @@ export const DEFAULT_VAULT_MANIPULATION_INFO: TVaultManipulationInfo = {}
 export type TPeriodicInfo = {
   daily: {
     count: number
+    latestDate: DateTime | null
   }
 }
 export const DEFAULT_PERIODIC_INFO: TPeriodicInfo = {
   daily: {
-    count: 0
+    count: 0,
+    latestDate: null
   }
 }
 
 export type TJournalInfo = {
   count: number
+  latestJournalDate: DateTime | null
 }
 export const DEFAULT_JOURNAL_INFO: TJournalInfo = {
   count: 0,
+  latestJournalDate: null
 }
 
 export type TInfo = {
@@ -82,10 +87,14 @@ export const DEFAULT_REMINDER_SETTINGS: TReminderSettings = {
 
 export type TVaultManipulationSettings = {
   replaceFilesOn: boolean
+  editHomeNote: boolean
+  homeNotePath: string | null
   showing: boolean
 }
 export const DEFAULT_VAULT_MANIPULATION_SETTINGS: TVaultManipulationSettings = {
   replaceFilesOn: false,
+  editHomeNote: false,
+  homeNotePath: "",
   showing: true,
 }
 
@@ -97,6 +106,7 @@ export type TPeriodicSettings = {
     templatePath: string
     reminderOn: boolean
     reminderTime: string
+    homeNoteId: string
     weekly: {
       subDirOn: boolean
       subDirFormat: string
@@ -122,6 +132,7 @@ export const DEFAULT_PERIODIC_SETTINGS: TPeriodicSettings = {
     templatePath: "/",
     reminderOn: true,
     reminderTime: "2100", 
+    homeNoteId: "",
     weekly: {
       subDirOn: true,
       subDirFormat: "\\W\\e\\e\\k - WW \\o\\f YY",
@@ -148,6 +159,7 @@ export type TJournalSettings = {
   entryTemplatePath: string
   reminderOn: boolean
   reminderTime: string
+  homeNoteId: string
   // later on add an option to choose the differentater of how many day's journal in one note
   monthly : {
     subDirOn: boolean
@@ -167,6 +179,7 @@ export const DEFAULT_JOURNAL_SETTINGS: TJournalSettings = {
   entryTemplatePath: "/",
   reminderOn: true,
   reminderTime: "2300",
+  homeNoteId: "",
   monthly: {
     subDirOn: true,
     subDirFormat: "M MMM YY"

@@ -77,62 +77,79 @@ export class JournalSettingsHandler implements ISettingsHandler {
     const interactiveTextSetting = new InteractiveTextSetting(this.settingsMngr, journalNamingSetting)
 
     // Journal Directory Settings
-    new Setting(this.collapsibleEl).setName('Journal Folder Path')
-      .setDesc('The location of your Journal')
-      .addSearch((search) => {
-        new FolderSuggest(this.plugin.app, search.inputEl)
-        search.setPlaceholder("Example: folder1/folder2")
-          .setValue(this.journalSettings.dirPath)
-          .onChange((folderName) => {
-            this.journalSettings.dirPath = folderName
-            this.setJournalSettings()
-          })
-      })
-
+    new Setting(this.collapsibleEl)
+    .setName('Journal Folder Path')
+    .setDesc('The location of your Journal')
+    .addSearch((search) => {
+      new FolderSuggest(this.plugin.app, search.inputEl)
+      search.setPlaceholder("Example: folder1/folder2")
+        .setValue(this.journalSettings.dirPath)
+        .onChange((folderName) => {
+          this.journalSettings.dirPath = folderName
+          this.setJournalSettings()
+        })
+    })
 
     // Journal Template Settings
     new Setting(this.collapsibleEl)
-      .setName('Journal Template Path')
-      .setDesc('The location of your Journal Template')
-      .addSearch((search) => {
-        new FileSuggest(this.plugin.app, search.inputEl)
-        search.setPlaceholder("Example: folder1/filename.md")
-          .setValue(this.journalSettings.journalTemplatePath)
-          .onChange((fileName) => {
-            this.journalSettings.journalTemplatePath = fileName
-            this.setJournalSettings()
-          })
-      })
-
-      new Setting(this.collapsibleEl)
-      .setName('Entry Template Path')
-      .setDesc('The location of your Journal Entry Template')
-      .addSearch((search) => {
-        new FileSuggest(this.plugin.app, search.inputEl)
-        search.setPlaceholder("Example: folder1/filename.md")
-          .setValue(this.journalSettings.entryTemplatePath)
-          .onChange((fileName) => {
-            this.journalSettings.entryTemplatePath = fileName
-            this.setJournalSettings()
-          })
-      })
-
-    // Journal Reminder Settings
-    const reminderSettingConfig: ReminderSettingConfig = {
-      container: this.collapsibleEl,
-      settingName: "Journal",
-      getSetting: () => this.journalSettings.reminderOn,
-      setSetting: (val: boolean) => {
-        this.journalSettings.reminderOn = val
-        this.setJournalSettings()
-      },
-      getToggled: () => this.journalSettings.reminderTime,
-      setToggled: (val: string) => {
-        this.journalSettings.reminderTime = val
-        this.setJournalSettings()
+    .setName('Journal Template Path')
+    .setDesc('The location of your Journal Template')
+    .addSearch((search) => {
+      new FileSuggest(this.plugin.app, search.inputEl)
+      search.setPlaceholder("Example: folder1/filename.md")
+        .setValue(this.journalSettings.journalTemplatePath)
+        .onChange((fileName) => {
+          this.journalSettings.journalTemplatePath = fileName
+          this.setJournalSettings()
+        })
+    })
+    
+    new Setting(this.collapsibleEl)
+    .setName('Home Note Id')
+    .setDesc(`Chose an id to help the plugin locate where you want your Journal Link`)
+    .addText((text) => {
+      text.setPlaceholder("Journal-Link")
+      if (this.journalSettings.homeNoteId != null) {
+        text.setValue(this.journalSettings.homeNoteId)
       }
-    }
-    new ReminderSetting(reminderSettingConfig, this.settingsMngr)
+      text.onChange((value) => {
+        this.journalSettings.homeNoteId = value
+        this.setJournalSettings()
+      })
+
+    })
+     
+
+    // TODO: Add some use to this man...
+    // new Setting(this.collapsibleEl)
+    // .setName('Entry Template Path')
+    // .setDesc('The location of your Journal Entry Template')
+    // .addSearch((search) => {
+    //   new FileSuggest(this.plugin.app, search.inputEl)
+    //   search.setPlaceholder("Example: folder1/filename.md")
+    //     .setValue(this.journalSettings.entryTemplatePath)
+    //     .onChange((fileName) => {
+    //       this.journalSettings.entryTemplatePath = fileName
+    //       this.setJournalSettings()
+    //     })
+    // })
+
+    // // Journal Reminder Settings
+    // const reminderSettingConfig: ReminderSettingConfig = {
+    //   container: this.collapsibleEl,
+    //   settingName: "Journal",
+    //   getSetting: () => this.journalSettings.reminderOn,
+    //   setSetting: (val: boolean) => {
+    //     this.journalSettings.reminderOn = val
+    //     this.setJournalSettings()
+    //   },
+    //   getToggled: () => this.journalSettings.reminderTime,
+    //   setToggled: (val: string) => {
+    //     this.journalSettings.reminderTime = val
+    //     this.setJournalSettings()
+    //   }
+    // }
+    // new ReminderSetting(reminderSettingConfig, this.settingsMngr)
 
 
     // Journal Subfolder Settings
@@ -186,11 +203,21 @@ export class JournalSettingsHandler implements ISettingsHandler {
   retrieveSettings(): void {
     this.journalSettings = this.settingsMngr.getJournalSettings()
   }
+  async setJournalSettings() {
+    await this.settingsMngr.setJournalSettings(this.journalSettings)
+  }
+
+  getAutoCreateOn(): boolean{
+    return this.journalSettings.autoCreateOn
+  }
+  async setAutoCreateOn(value: boolean) {
+    this.journalSettings.autoCreateOn = value
+    await this.settingsMngr.setJournalSettings(this.journalSettings)
+  }
 
   getSettingsShowing(): boolean {
     return this.getJournalSettingsShowing()
   }
-
   async setSettingsShowing(value: boolean) {
     await this.setJournalSettingsShowing(value)
   }
@@ -198,15 +225,11 @@ export class JournalSettingsHandler implements ISettingsHandler {
   getJournalSettingsShowing(): boolean {
     return this.journalSettings.showing
   }
-
   async setJournalSettingsShowing(value: boolean) {
     this.journalSettings.showing = value
     await this.settingsMngr.setJournalSettings(this.journalSettings)
   }
 
-  async setJournalSettings() {
-    await this.settingsMngr.setJournalSettings(this.journalSettings)
-  }
 
   async initialize() {
     this.plugin.debugger.log("Initializing JournalSettingsHandler")

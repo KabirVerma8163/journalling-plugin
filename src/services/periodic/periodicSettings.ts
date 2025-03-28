@@ -168,18 +168,18 @@ function createTimelyNoteSetting(name: string, settingHandler: PeriodicSettingsH
     settingHandler.setTimelySettingsShowing(name, val)
   })
   
-  // Autocreate on Setting
-  new Setting(collasibleObj.collapsibleEl)
-    .setName(`Enable ${name} Note Autocreation`)
-    .setDesc(`Automatically create a ${name} note without a command`)
-    .addToggle((toggle) => {
-      // @ts-ignore
-      toggle.setValue(settingHandler.periodicSettings[name.toLowerCase()].autoCreateOn)
-        .onChange(async (value) => {
-          // @ts-ignore
-          settingHandler.periodicSettings[name.toLowerCase()].autoCreateOn = value
-          await settingHandler.setPeriodicSettings()
-    })})
+  // // Autocreate on Setting
+  // new Setting(collasibleObj.collapsibleEl)
+  //   .setName(`Enable ${name} Note Autocreation`)
+  //   .setDesc(`Automatically create a ${name} note without a command`)
+  //   .addToggle((toggle) => {
+  //     // @ts-ignore
+  //     toggle.setValue(settingHandler.periodicSettings[name.toLowerCase()].autoCreateOn)
+  //       .onChange(async (value) => {
+  //         // @ts-ignore
+  //         settingHandler.periodicSettings[name.toLowerCase()].autoCreateOn = value
+  //         await settingHandler.setPeriodicSettings()
+  //   })})
 
 
   // Note naming format
@@ -221,41 +221,60 @@ function createTimelyNoteSetting(name: string, settingHandler: PeriodicSettingsH
 
   // Note template path
   new Setting(collasibleObj.collapsibleEl)
-    .setName(`${name} Template Path`)
-    .setDesc(`The location of your ${name} Note Template`)
-    .addSearch((search) => {
-      new FileSuggest(settingHandler.plugin.app, search.inputEl)
-      search.setPlaceholder("Example: folder1/filename.md")
+  .setName(`${name} Template Path`)
+  .setDesc(`The location of your ${name} Note Template`)
+  .addSearch((search) => {
+    new FileSuggest(settingHandler.plugin.app, search.inputEl)
+    search.setPlaceholder("Example: folder1/filename.md")
+      // @ts-ignore
+      .setValue(settingHandler.periodicSettings[name.toLowerCase()].templatePath)
+      .onChange((fileName) => {
         // @ts-ignore
-        .setValue(settingHandler.periodicSettings[name.toLowerCase()].templatePath)
-        .onChange((fileName) => {
-          // @ts-ignore
-          settingHandler.periodicSettings[name.toLowerCase()].templatePath = fileName
-          settingHandler.setPeriodicSettings()
-        })
-    })
+        settingHandler.periodicSettings[name.toLowerCase()].templatePath = fileName
+        settingHandler.setPeriodicSettings()
+      })
+  })
+  
+  // // Home Note Id
+  // new Setting(collasibleObj.collapsibleEl)
+  // .setName('Home Note Id')
+  // .setDesc(`Chose an id to help the plugin locate where you want your ${name} Note Link`)
+  // .addText((text) => {
+  //   text.setPlaceholder(`${name}-Link`)
+  //   // @ts-ignore
+  //   if (settingHandler.periodicSettings[name.toLowerCase()].homeNoteId != null) {
+  //     // @ts-ignore
+  //     text.setValue(settingHandler.periodicSettings[name.toLowerCase()].homeNoteId)
+  //   }
+  //   text.onChange((value) => {
+  //     // @ts-ignore
+  //     settingHandler.periodicSettings[name.toLowerCase()].homeNoteId = value
+  //     settingHandler.setPeriodicSettings()
+  //   })
+
+  })
 
   // Note reminder
-  const reminderSettingConfig: ReminderSettingConfig = {
-    container: collasibleObj.collapsibleEl,
-    settingName: `${name} Note`,
-    // @ts-ignore
-    getSetting: () => settingHandler.periodicSettings[name.toLowerCase()].reminderOn,
-    setSetting: (val: boolean) => {
-      // @ts-ignore
-      settingHandler.periodicSettings[name.toLowerCase()].reminderOn = val
-      // @ts-ignore
-      settingHandler.setPeriodicSettings()
-    },
-    // @ts-ignore
-    getToggled: () => settingHandler.periodicSettings[name.toLowerCase()].reminderTime,
-    setToggled: (val: string) => {
-      // @ts-ignore
-      settingHandler.periodicSettings[name.toLowerCase()].reminderTime = val
-      settingHandler.setPeriodicSettings()
-    }
-  }
-  new ReminderSetting(reminderSettingConfig, settingHandler.settingsMngr)
+  // const reminderSettingConfig: ReminderSettingConfig = {
+  //   container: collasibleObj.collapsibleEl,
+  //   settingName: `${name} Note`,
+  //   // @ts-ignore
+  //   getSetting: () => settingHandler.periodicSettings[name.toLowerCase()].reminderOn,
+  //   setSetting: (val: boolean) => {
+  //     // @ts-ignore
+  //     settingHandler.periodicSettings[name.toLowerCase()].reminderOn = val
+  //     // @ts-ignore
+  //     settingHandler.setPeriodicSettings()
+  //   },
+  //   // @ts-ignore
+  //   getToggled: () => settingHandler.periodicSettings[name.toLowerCase()].reminderTime,
+  //   setToggled: (val: string) => {
+  //     // @ts-ignore
+  //     settingHandler.periodicSettings[name.toLowerCase()].reminderTime = val
+  //     settingHandler.setPeriodicSettings()
+  //   }
+  // }
+  // new ReminderSetting(reminderSettingConfig, settingHandler.settingsMngr)
 
 
   collasibleObj.containerEl.style.width = "92.5%"

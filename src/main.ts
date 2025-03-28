@@ -2,6 +2,9 @@ import { App, Plugin, PluginManifest} from 'obsidian'
 import { ServicesManager } from 'src/services/servicesMngr'
 import { DebuggingSupport } from 'src/utils/debuggingSupport'
 import { nanoid } from 'nanoid'
+import { JournalService } from './services/journalling/journal'
+import { DateTime } from 'luxon'
+import { auto } from '@popperjs/core'
 
 
 export default class JournallingPlugin extends Plugin {
@@ -10,6 +13,8 @@ export default class JournallingPlugin extends Plugin {
 	name: string
 	isMobile: boolean
 	servicesManager: ServicesManager
+
+	runOnUnload: (() => void)[] = []
 
 	debugger: DebuggingSupport
 	// TODO: check if the template naming format is a valid naming format.
@@ -40,9 +45,55 @@ export default class JournallingPlugin extends Plugin {
 		// All the initialize functions go here
 		await this.servicesManager.initialize()
 		// this.addSettingTab(this.servicesManager.settingsMngr)
+
+		this.setupAutomaticJournalCreation()
+		
 	}
 
-	onunload() {}
+	onunload() {
+		this.runOnUnload.forEach(cb => cb())
+	}
+
+	setupAutomaticJournalCreation(): number {
+		// Get the journal service
+		const journalService = this.servicesManager.serviceMngrs.find(
+			service => service.name === "Journal"
+		) as JournalService
+		
+		if (!journalService) {
+			this.debugger.log("Journal service not found, automatic creation not set up")
+			return -1
+		}
+
+		// Set up the interval to run every 12 hours
+		const intervalId = window.setInterval(() => {
+			let autoCreateOn = journalService.settingsHandler.getAutoCreateOn()       
+
+			if (!autoCreateOn) {
+				return
+			}
+
+			const currentDate = DateTime.now()
+			this.debugger.log(`Automatic journal creation triggered at ${currentDate.toFormat("yyyy-MM-dd HH:mm")}`)
+			
+			// Call the create journal function
+			journalService.featureHandler.createJournalNote(currentDate, false)
+			
+			// Update the latest journal date
+			journalService.infoHandler.setLatestJournalDate(currentDate)
+		},
+	 	// 2 * 1000 // 6 hours in milliseconds
+		6 * 60 * 60 * 1000 // 6 hours in milliseconds
+	); 
+		
+		// Store the interval ID so it can be cleared on plugin unload
+		this.runOnUnload.push(() => {
+			window.clearInterval(intervalId)
+			this.debugger.log('Automatic journal creation interval cleared on unload.')
+		})
+		
+		return intervalId
+	}
 
 	// A basic function to send an error notice
 	basicErrorNotice(errMsg: string, length?: number) {

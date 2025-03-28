@@ -1,20 +1,16 @@
-import { Command, TFile } from "obsidian"
+import { Command, getFrontMatterInfo, TFile } from "obsidian"
 import JournallingPlugin from "src/main"
 import { IFeatureHandler } from "src/services/features"
 import { IServiceMngr } from "src/services/servicesMngr"
 import { PeriodicService } from "src/services/periodic/periodic"
 import { PeriodicInfoHandler } from "src/services/periodic/periodicInfo"
 import { PeriodicSettingsHandler } from "src/services/periodic/periodicSettings"
-import moment from "moment"
-import { PluginReminder, ReminderType } from "src/services/functional/reminder/reminderInfo"
-import { NotificationLocation } from "src/services/functional/notification/notificationInfo"
-import { nanoid } from 'nanoid'
 import { firstSunday, formatDate, setReminderTime } from "src/utils/independentUtils"
-import { Server } from "http"
+import { DateTime } from "luxon"
 import { JournalService } from "../journalling/journal"
-import { link } from "fs"
 
 export class PeriodicFeaturesHandler implements IFeatureHandler {
+  // #region Constructor
   name: string
   description: string
   serviceMngr: PeriodicService
@@ -31,7 +27,8 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
     this.settingsHandler = serviceMngr.settingsHandler as PeriodicSettingsHandler
     this.plugin = serviceMngr.plugin
     this.commands = []
-  }
+  } 
+  // #endregion
 
   async initialize() {
     this.plugin.debugger.log("Initializing PeriodicFeatures")
@@ -54,118 +51,91 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
 
   }
 
-  async createDailyNote(date?: Date, fromCommand: boolean = false) {
-    let dailySettings = this.settingsHandler.periodicSettings.daily
-    let vault = this.plugin.app.vault
-    if (date == undefined) {
-      date = new Date()
-    }
+  async createDailyNote(date: DateTime = DateTime.now(), fromCommand: boolean = false) {
+    // moment.updateLocale('en', { week: { dow: 0 }})// Sunday is the first day of the week
 
-    moment.updateLocale('en', {
-      week: {
-        dow: 0, // Sunday is the first day of the week
-      }
+    let dailySettings = this.settingsHandler.periodicSettings.daily
+    let vaultManipulationService = this.serviceMngr.servicesMngr.vaultManipulationService
+
+    const folderPath = this.getDailyNotePath(date)
+    const dailyNoteContent = await this.makeDailyNoteContent(date)
+    if (dailyNoteContent == null) { return }
+
+    vaultManipulationService.featureHandler.createNewMarkdownFile(
+      folderPath, 
+      formatDate(dailySettings.namingFormat, date.toJSDate()),
+      dailyNoteContent
+    )
+    .then(() => {
+      // this.infoHandler.incrementDailyCount()
     })
+  }
+
+  private getDailyNotePath(date?: DateTime): string{
+    if (date === undefined) {
+      date = DateTime.now()  // Using Luxon for the current date
+    }
+    let dailySettings = this.settingsHandler.periodicSettings.daily
 
     // if the dailySettings.diryPath is "/" then don't add the extra "/"
     let basicPath = "/" === dailySettings.dirPath ? "" : "" + dailySettings.dirPath
     if (basicPath === "") basicPath = "/"
     if (dailySettings.yearly.subDirOn) { // Add the yearly subdirectory here
-      basicPath += "/" + formatDate(dailySettings.yearly.subDirFormat, date)
+      basicPath += "/" + formatDate(dailySettings.yearly.subDirFormat, date.toJSDate())
     } 
     if (dailySettings.monthly.subDirOn) { // Add the monthly subdirectory here
-      basicPath += "/" + formatDate(dailySettings.monthly.subDirFormat, date)
+      basicPath += "/" + formatDate(dailySettings.monthly.subDirFormat, date.toJSDate())
     }
     if (dailySettings.weekly.subDirOn) { // Add the weekly subdirectory here
-      basicPath += "/" + formatDate(dailySettings.weekly.subDirFormat, date)
+      basicPath += "/" + formatDate(dailySettings.weekly.subDirFormat, date.toJSDate())
     }
+    
+    return basicPath
+  }
 
+  private async makeDailyNoteContent(date: DateTime): Promise<string | null>{
+    let dailySettings = this.settingsHandler.periodicSettings.daily
+    let vault = this.plugin.app.vault
 
-    let noteDate = date
-    let folderPath = basicPath
-    let filePath = basicPath + `/${formatDate(dailySettings.namingFormat, date)}.md`
-    let vaultManipulationService = this.serviceMngr.servicesMngr.vaultManipulationService
+    let folderPath = this.getDailyNotePath(date)
+    // let filePath = folderPath + `/${formatDate(dailySettings.namingFormat, date.toJSDate())}.md`
 
-    let templateFile = vault.getAbstractFileByPath(dailySettings.templatePath)
     let dailyNoteContent = ""
 
-    let yesterDate = new Date(date)
-    yesterDate.setDate(yesterDate.getDate() - 1)
-    let yesterFileName = formatDate(dailySettings.namingFormat, yesterDate)
-    let tomorrowDate = new Date(date)
-    tomorrowDate.setDate(tomorrowDate.getDate() + 1)
-    let tomorrowFileName = formatDate(dailySettings.namingFormat, tomorrowDate)
+    let yesterDate = date.minus({ days: 1 })
+    let yesterFileName = formatDate(dailySettings.namingFormat, yesterDate.toJSDate())
+
+    let tomorrowDate = date.plus({ days: 1 })
+    let tomorrowFileName = formatDate(dailySettings.namingFormat, tomorrowDate.toJSDate())
 
     let links = `#### [[${yesterFileName}|<--Yesterday's Note]] ++ [[${tomorrowFileName}|Tomorrow's Note-->]]\n`
 
+    let templateFile = vault.getAbstractFileByPath(dailySettings.templatePath)
     if (templateFile instanceof TFile) {
-      await vault.read(templateFile).then(content => {
-        const regex = /^---\n([\s\S]*?)\n---\n/;
-        let frontmatter = content.match(regex)
-        if (frontmatter != null) {
-          dailyNoteContent = frontmatter[0]
-          content = content.replace(regex, "")
+      let templateString = await vault.read(templateFile)
+    
+      // Extract front matter using getFrontMatterInfo
+      const frontMatterInfo = getFrontMatterInfo(templateString)
+      let dailyNoteContent = frontMatterInfo.exists ? frontMatterInfo.frontmatter : ""
+      templateString = templateString.substring(frontMatterInfo.contentStart)
+      dailyNoteContent += links + templateString
+    
+      // Replace {{journal_link}} if it exists
+      if (dailyNoteContent.includes("{{journal_link}}")) {
+        const journalService = this.serviceMngr.servicesMngr.serviceMngrs.find(
+          (service) => service.name === "Journal"
+        )
+    
+        if (journalService instanceof JournalService) {
+          const journalNamingFormat = this.serviceMngr.servicesMngr.settingsMngr.getJournalSettings().namingFormat
+          const journalName = formatDate(journalNamingFormat, firstSunday(date).toJSDate())
+          const weeklyJournalPath = `[[${journalName}|Today's Journal]]`
+          dailyNoteContent = dailyNoteContent.replace(/{{journal_link}}/g, weeklyJournalPath)
         }
-        dailyNoteContent += links
-        dailyNoteContent += content
-
-        // Replaces the {{journal_link}} in the template
-        if (dailyNoteContent.includes('{{journal_link}}')) {
-          this.serviceMngr.servicesMngr.serviceMngrs.forEach(service => {
-            if (service.name === "Journal") {
-              let journalNamingFormat = this.serviceMngr.servicesMngr.settingsMngr.getJournalSettings().namingFormat
-              let journalName = formatDate(journalNamingFormat, firstSunday(noteDate))
-              let weeklyJournalPath = `[[${journalName}|Today's Journal]]`
-              // @ts-ignore
-              dailyNoteContent = dailyNoteContent.replaceAll("{{journal_link}}", weeklyJournalPath)
-            }
-          })
-        }
-      })
+      }
     }
 
-    dailyNoteContent += links
-
-    vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath
-      , formatDate(dailySettings.namingFormat, date)
-      , true // needs changing
-      , dailyNoteContent)
-      .then(() => {
-        this.infoHandler.incrementDailyCount()
-        if (dailySettings.reminderOn) {
-          if (fromCommand){
-            noteDate = setReminderTime(dailySettings.reminderTime, noteDate)
-          }
-          let id = nanoid()
-          let reminder: PluginReminder = {
-            id: `Daily-Note_${id}`,
-            name: `Daily Note: ${formatDate(dailySettings.namingFormat)}`,
-            description: "A reminder to work on your daily note",
-            type: ReminderType.Daily,
-            dateActiveOn: noteDate.toISOString(),
-            taskLengthMilliSec: 3000,
-            deleteOnDone: true,
-            snoozeCount: 0,
-            deleteOnShow: true
-          }
-
-          let reminderService = this.serviceMngr.servicesMngr.reminderService
-          if (reminderService != undefined) {
-            reminderService.featureHandler.addAndActivateNewReminder(reminder, {
-              location: NotificationLocation.Both,
-              // TODO make it on click
-              runOnShow() {
-                vaultManipulationService.featureHandler.openFile(filePath)
-              },
-              externalOnClick: (ev) => {
-                this.plugin.debugger.log("External on click")
-                vaultManipulationService.featureHandler.openFile(filePath)
-              }
-            })
-          }
-
-        }
-      })
+    return dailyNoteContent + links
   }
 
   async cleanup() {
