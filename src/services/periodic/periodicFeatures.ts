@@ -118,8 +118,8 @@ export class PeriodicFeaturesHandler implements IFeatureHandler {
       const frontMatterInfo = getFrontMatterInfo(templateString)
       if (frontMatterInfo.exists) {
         dailyNoteContent = `---\n` + frontMatterInfo.frontmatter + `---\n`
-        templateString = templateString.substring(frontMatterInfo.contentStart)
       }
+      templateString = templateString.substring(frontMatterInfo.contentStart)
       dailyNoteContent += links + templateString
     
       // Replace {{journal_link}} if it exists

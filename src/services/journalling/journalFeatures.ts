@@ -209,8 +209,8 @@ export class JournalFeatureHandler implements IFeatureHandler {
     const frontMatterInfo = getFrontMatterInfo(templateString)
     if (frontMatterInfo.exists) {
       journalContent = `---\n` + frontMatterInfo.frontmatter + `---\n`
-      templateString = templateString.substring(frontMatterInfo.contentStart)
     }
+    templateString = templateString.substring(frontMatterInfo.contentStart)
   
     // Beginning links
     let links = `#### [[${previousJournalName}|<--Last Week's Journal]] ++ [[${nextJournalName}|Next Week's Journal-->]]\n`
