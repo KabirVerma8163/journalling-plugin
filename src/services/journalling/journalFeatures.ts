@@ -263,7 +263,8 @@ export class JournalFeatureHandler implements IFeatureHandler {
     const homeNotePath = vaultManipulationService.settingsHandler.getHomeNotePath()
     const journalHomeId = this.settingsHandler.journalSettings.homeNoteId
     const journalSettings = this.settingsHandler.journalSettings
-    
+    const sundayOfWeek = date.startOf('week').minus({ days: 1 })
+
     if (!homeNotePath || !journalHomeId) {
       this.plugin.basicErrorNotice("Missing home note path or journal home ID in settings")
       return
@@ -279,7 +280,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
     }
     
     // Generate the journal name based on the date (similar to createJournalNote)
-    const journalName = formatDate(journalSettings.namingFormat, date.toJSDate())
+    const journalName = formatDate(journalSettings.namingFormat, sundayOfWeek.toJSDate())
     
     // Read the home note content
     const homeNoteContent = await vault.read(homeNote)
