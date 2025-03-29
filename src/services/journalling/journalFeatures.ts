@@ -4,7 +4,7 @@ import JournallingPlugin from "src/main"
 import { IFeatureHandler } from "src/services/features"
 import { IServiceMngr } from "src/services/servicesMngr"
 import { JournalService } from "src/services/journalling/journal"
-import { JournalInfoHandler } from "src/services/journalling/journalInfo"
+import { JournalInfoHandler, updateLatestJournalDate } from "src/services/journalling/journalInfo"
 import { JournalSettingsHandler } from "src/services/journalling/journalSettings"
 import { firstSunday, formatDate} from "src/utils/independentUtils"
 import { DEFAULT_PERIODIC_SETTINGS } from "src/dataManagement/dataTypes"
@@ -76,7 +76,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
   }
 
   async createJournalNote(
-    date: DateTime = firstSunday(DateTime.now()), 
+    date: DateTime = DateTime.now(), 
     fromCommand: boolean = false,
     createDailes: boolean = true
   ) { // Get the path to the folder
@@ -88,8 +88,8 @@ export class JournalFeatureHandler implements IFeatureHandler {
     let journalContent = await this.makeJournalContent(date, futureDates)
     if (journalContent == null) return
 
-    let folderPath = this.getJournalFolderPath(date)
-    const sundayOfWeek = date.startOf('week').minus({ days: 1 })
+    const sundayOfWeek = firstSunday(date)
+    let folderPath = this.getJournalFolderPath(sundayOfWeek)
     let fileName = `/${formatDate(journalSettings.namingFormat, sundayOfWeek.toJSDate())}.md`
 
     let serviceFeatureHandler: PeriodicFeaturesHandler
@@ -99,9 +99,14 @@ export class JournalFeatureHandler implements IFeatureHandler {
 
     vaultManipulationService.featureHandler.createNewMarkdownFile(folderPath, fileName, journalContent)
     .then(({file, status}) => {
-      if (status == NewFileCreationStatus.SuccessfulNewCreation || status == NewFileCreationStatus.SuccessfulReplacement) {
+      if (status == NewFileCreationStatus.SuccessfulNewCreation 
+        || status == NewFileCreationStatus.SuccessfulReplacement
+        || status == NewFileCreationStatus.FileAlreadyExists
+      ) {
         this.infoHandler.incrementCount()
-        if (createDailes) {
+        if (status == NewFileCreationStatus.FileAlreadyExists) {
+          notificationService.featureHandler.createWarningNotice( `File: ${fileName} already exists!` )
+        } else if (createDailes) {
           futureDates.forEach(futureDate => {
             serviceFeatureHandler.createDailyNote(futureDate)
           })
@@ -110,22 +115,15 @@ export class JournalFeatureHandler implements IFeatureHandler {
         if (fromCommand && file){
           vaultManipulationService.featureHandler.openFile(file.path)
         }
+
+        updateLatestJournalDate(this.serviceMngr, date)
         
         if (vaultManipulationService.settingsHandler.getEditHomeNote() === true){
           let dailyNamingFormat = this.serviceMngr.servicesMngr.settingsMngr.getPeriodicSettings().daily.namingFormat
           if (dailyNamingFormat === "") {
             dailyNamingFormat = DEFAULT_PERIODIC_SETTINGS.daily.namingFormat
           }
-
-          this.updateHomeNoteWithJournalLink(
-            date,
-            formatDate(dailyNamingFormat, date.toJSDate())
-          )
-        }
-      } else if (status == NewFileCreationStatus.FileAlreadyExists) {
-        notificationService.featureHandler.createWarningNotice( `File: ${fileName} already exists!` )
-        if (fromCommand && file){
-          vaultManipulationService.featureHandler.openFile(file.path)
+          this.updateHomeNoteWithJournalLink( date, formatDate(dailyNamingFormat, date.toJSDate()) )
         }
       } else {
         notificationService.featureHandler.createErrorNotice(
