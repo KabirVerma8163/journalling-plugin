@@ -211,7 +211,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
   
     if (!date) return null
     // Adjust the date to the Sunday of its week (start of the week)
-    const sundayOfWeek = date.startOf('week').minus({ days: 1 })
+    const sundayOfWeek = date.weekday === 7 ? date : date.startOf('week').minus({ days: 1 });
     let previousDate = sundayOfWeek.minus({ days: 7 }).toJSDate()
     let nextDate = sundayOfWeek.plus({ days: 7 }).toJSDate()
   
