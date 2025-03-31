@@ -174,7 +174,7 @@ export type TJournalSettings = {
 export const DEFAULT_JOURNAL_SETTINGS: TJournalSettings = {
   autoCreateOn: true,
   dirPath: "/",
-  namingFormat: "\\W\\e\\e\\k\\l\\y Journ\\a\\l – Do MMM YY",
+  namingFormat: "\\W\\e\\e\\k\\l\\y Journ\\a\\l - Do MMM YY",
   journalTemplatePath: "/",
   entryTemplatePath: "/",
   reminderOn: true,

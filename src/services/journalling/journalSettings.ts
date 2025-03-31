@@ -6,7 +6,7 @@ import { DEFAULT_JOURNAL_SETTINGS, TJournalSettings } from "src/dataManagement/d
 import { CollapsibleObject } from "src/ui_elements/collapsible"
 import { Setting } from "obsidian"
 import { FileSuggest, FolderSuggest } from "src/ui_elements/suggesters/fileFolderSuggests"
-import { InteractiveTextSetting, ReminderSetting, ReminderSettingConfig, TimelySubDirSetting, TimelySubDirSettingConfig } from "src/utils/moreSettings"
+import { InteractiveTextSetting, TimelySubDirSetting, TimelySubDirSettingConfig } from "src/utils/moreSettings"
 import { formatDate } from "src/utils/independentUtils"
 
 export class JournalSettingsHandler implements ISettingsHandler {
@@ -156,6 +156,7 @@ export class JournalSettingsHandler implements ISettingsHandler {
     let monthlyConfig: TimelySubDirSettingConfig = {
       container: this.collapsibleEl,
       settingName: 'Monthly',
+      servicePrefix: this.settingsElId,
       getSetting: () => { return this.journalSettings.monthly.subDirOn },
       setSetting: (val: boolean) => {
         this.journalSettings.monthly.subDirOn = val
@@ -163,9 +164,9 @@ export class JournalSettingsHandler implements ISettingsHandler {
       },
       getTextFunc: (val: string, isDefault?: boolean) => {
         if (val === "value") {
-          return isDefault ? DEFAULT_JOURNAL_SETTINGS.monthly.subDirFormat : this.journalSettings.monthly.subDirFormat
+          return formatDate(isDefault ? DEFAULT_JOURNAL_SETTINGS.monthly.subDirFormat : this.journalSettings.monthly.subDirFormat)
         } else {
-          return isDefault ? DEFAULT_JOURNAL_SETTINGS.monthly.subDirFormat : this.journalSettings.monthly.subDirFormat
+          return (isDefault ? DEFAULT_JOURNAL_SETTINGS.monthly.subDirFormat : this.journalSettings.monthly.subDirFormat)
         }
       },
       setTextFunc: (val: string) => {
@@ -178,6 +179,7 @@ export class JournalSettingsHandler implements ISettingsHandler {
     let yearlyConfig: TimelySubDirSettingConfig = {
       container: this.collapsibleEl,
       settingName: 'Yearly',
+      servicePrefix: this.settingsElId,
       getSetting: () => { return this.journalSettings.yearly.subDirOn },
       setSetting: (val: boolean) => {
         this.journalSettings.yearly.subDirOn = val
@@ -185,7 +187,7 @@ export class JournalSettingsHandler implements ISettingsHandler {
       },
       getTextFunc: (val: string, isDefault?: boolean) => {
         if (val === "value") {
-          return isDefault ? DEFAULT_JOURNAL_SETTINGS.yearly.subDirFormat : this.journalSettings.yearly.subDirFormat
+          return formatDate(isDefault ? DEFAULT_JOURNAL_SETTINGS.yearly.subDirFormat : this.journalSettings.yearly.subDirFormat)
         } else {
           return isDefault ? DEFAULT_JOURNAL_SETTINGS.yearly.subDirFormat : this.journalSettings.yearly.subDirFormat
         }

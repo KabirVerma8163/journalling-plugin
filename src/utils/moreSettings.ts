@@ -13,6 +13,7 @@ export type InteractiveTextSettingConfig = {
   setting: Setting
   settingName: string
   descText?: string // Optional since it has a default value
+  servicePrefix?: string // Add this line
   getText: (val: string, isDefault?: boolean) => string
   setText: (val: string) => void
 }
@@ -22,6 +23,7 @@ export class InteractiveTextSetting implements IExtendedSetting {
   setting: Setting
   settingName: string
   descText: string
+  servicePrefix: string // Add this line
   getText: (val: string, isDefault?: boolean) => string
   setText: (val: string) => void
 
@@ -32,11 +34,12 @@ export class InteractiveTextSetting implements IExtendedSetting {
     this.descText = config.descText || ""
     this.getText = config.getText
     this.setText = config.setText
+    this.servicePrefix = config.servicePrefix || "" // Add this line
     this.addTextInteractiveDesc()
   }
 
   private addTextInteractiveDesc() {
-    let id = `${this.settingName}-naming-desc`
+    let id = `${this.servicePrefix}-${this.settingName}-naming-desc`
     let interactiveText = this.getText("value")
     let desc = this.setting.setDesc(this.descText).descEl
 
@@ -57,8 +60,13 @@ export class InteractiveTextSetting implements IExtendedSetting {
 
   private handleTextChange(value: string, getText: (val: string, isDefault?: boolean) => string, setText: (val: string) => void, id: string) {
     setText(value)
-    // @ts-ignore
-    document.getElementById(`${id}-interactiveText`).textContent = getText("value")
+    // Find the element by ID and update its content
+    const element = document.getElementById(`${id}-interactiveText`)
+    if (element) {
+      element.textContent = getText("value")
+    }
+    // // @ts-ignore
+    // document.getElementById(`${id}-interactiveText`).textContent = getText("value")
   }
 }
 
@@ -164,6 +172,7 @@ export class ReminderSetting extends ToggledSetting {
 export interface TimelySubDirSettingConfig {
   container: HTMLElement
   settingName: string
+  servicePrefix?: string // Add this line
   getSetting: () => boolean
   setSetting: (val: boolean) => void
   getTextFunc: (val: string, isDefault?: boolean) => string
@@ -196,6 +205,7 @@ export class TimelySubDirSetting implements IExtendedSetting {
     const interactiveTextConfig: InteractiveTextSettingConfig = {
       setting: this.subDirNaming,
       settingName: `${config.settingName.toLowerCase()}SubDirName`,
+      servicePrefix: config.servicePrefix, // Add this line
       descText: `Format: `,
       getText: config.getTextFunc,
       setText: config.setTextFunc

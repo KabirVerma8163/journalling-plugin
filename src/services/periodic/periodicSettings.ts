@@ -4,7 +4,7 @@ import { CollapsibleObject } from "src/ui_elements/collapsible"
 import { IServiceMngr, ServicesManager } from "src/services/servicesMngr"
 import { TPeriodicSettings, DEFAULT_PERIODIC_SETTINGS } from "src/dataManagement/dataTypes"
 import { Setting } from "obsidian"
-import { InteractiveTextSetting, InteractiveTextSettingConfig, ReminderSetting, ReminderSettingConfig, TimelySubDirSetting, TimelySubDirSettingConfig } from "src/utils/moreSettings"
+import { InteractiveTextSetting, InteractiveTextSettingConfig, TimelySubDirSetting, TimelySubDirSettingConfig } from "src/utils/moreSettings"
 import { FileSuggest, FolderSuggest } from "src/ui_elements/suggesters/fileFolderSuggests"
 import { formatDate } from "src/utils/independentUtils"
 
@@ -49,6 +49,7 @@ export class PeriodicSettingsHandler implements ISettingsHandler {
     let weeklyConfig: TimelySubDirSettingConfig = {
       container: dailyCollapsibleObj.collapsibleEl,
       settingName: 'Weekly',
+      servicePrefix: this.settingsElId,
       getSetting: () => { return this.periodicSettings.daily.weekly.subDirOn },
       setSetting: (val: boolean) => {
         this.periodicSettings.daily.weekly.subDirOn = val
@@ -71,6 +72,7 @@ export class PeriodicSettingsHandler implements ISettingsHandler {
     let monthlyConfig: TimelySubDirSettingConfig = {
       container: dailyCollapsibleObj.collapsibleEl,
       settingName: 'Monthly',
+      servicePrefix: this.settingsElId,
       getSetting: () => { return this.periodicSettings.daily.monthly.subDirOn },
       setSetting: (val: boolean) => {
         this.periodicSettings.daily.monthly.subDirOn = val
@@ -80,7 +82,7 @@ export class PeriodicSettingsHandler implements ISettingsHandler {
         if (val === "value") {
           return formatDate(isDefault ? DEFAULT_PERIODIC_SETTINGS.daily.monthly.subDirFormat : this.periodicSettings.daily.monthly.subDirFormat)
         } else {
-          return isDefault ? DEFAULT_PERIODIC_SETTINGS.daily.monthly.subDirFormat : this.periodicSettings.daily.monthly.subDirFormat
+          return (isDefault ? DEFAULT_PERIODIC_SETTINGS.daily.monthly.subDirFormat : this.periodicSettings.daily.monthly.subDirFormat)
         }
       },
       setTextFunc: (val: string) => {
@@ -93,6 +95,7 @@ export class PeriodicSettingsHandler implements ISettingsHandler {
     let yearlyConfig: TimelySubDirSettingConfig = {
       container: dailyCollapsibleObj.collapsibleEl,
       settingName: 'Yearly',
+      servicePrefix: this.settingsElId,
       getSetting: () => { return this.periodicSettings.daily.yearly.subDirOn },
       setSetting: (val: boolean) => {
         this.periodicSettings.daily.yearly.subDirOn = val
