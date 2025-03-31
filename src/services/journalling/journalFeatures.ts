@@ -260,7 +260,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
     const homeNotePath = vaultManipulationService.settingsHandler.getHomeNotePath()
     const journalHomeId = this.settingsHandler.journalSettings.homeNoteId
     const journalSettings = this.settingsHandler.journalSettings
-    const sundayOfWeek = date.startOf('week').minus({ days: 1 })
+    const sundayOfWeek = firstSunday(date)
 
     if (!homeNotePath || !journalHomeId) {
       this.plugin.basicErrorNotice("Missing home note path or journal home ID in settings")
