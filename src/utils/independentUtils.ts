@@ -82,7 +82,7 @@ export function formatDate(val: string, date?: Date) {
 // }
 
 export function firstSunday(date: DateTime): DateTime {
-  let startOfWeek = date.startOf('week').minus({ days: 1 }) // Luxon’s DateTime already works with the 'week' unit
+  let startOfWeek = date.weekday === 7 ? date : date.startOf('week').minus({ days: 1 }) // Luxon’s DateTime already works with the 'week' unit
   return startOfWeek // Returning as a DateTime object
 }
 

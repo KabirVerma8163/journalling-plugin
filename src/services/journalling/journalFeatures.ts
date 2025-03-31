@@ -211,7 +211,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
   
     if (!date) return null
     // Adjust the date to the Sunday of its week (start of the week)
-    const sundayOfWeek = date.weekday === 7 ? date : date.startOf('week').minus({ days: 1 });
+    const sundayOfWeek = firstSunday(date)
     let previousDate = sundayOfWeek.minus({ days: 7 }).toJSDate()
     let nextDate = sundayOfWeek.plus({ days: 7 }).toJSDate()
   
@@ -239,8 +239,7 @@ export class JournalFeatureHandler implements IFeatureHandler {
     // Daily note links
     let dailyNoteLinks = ""
     for (let i = 0; i < 7; i++) {
-      let startOfWeek = date.startOf('week').minus({ days: 1 })
-      let futureDate = startOfWeek.plus({ days: i })
+      let futureDate = sundayOfWeek.plus({ days: i })
       let formattedFutureDate = formatDate(dailyNamingFormat, futureDate.toJSDate())
   
       dailyNoteLinks += `## [[${formattedFutureDate}]]\n  > Your entry\n`
