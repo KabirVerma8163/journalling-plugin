@@ -84,7 +84,7 @@ export default class JournallingPlugin extends Plugin {
 			journalService.infoHandler.setLatestJournalDate(currentDate)
 		},
 	 	// 2 * 1000 // 6 hours in milliseconds
-		6 * 60 * 60 * 1000 // 6 hours in milliseconds
+		1 * 60 * 60 * 1000 // 6 hours in milliseconds
 	); 
 		
 		// Store the interval ID so it can be cleared on plugin unload
